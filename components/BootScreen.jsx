@@ -169,6 +169,21 @@ export default function BootScreen({ onComplete }) {
   const [cursorVisible, setCursorVisible] = useState(true);
   const [showCTA, setShowCTA] = useState(false);
 
+  // Lock body scroll while BootScreen is loading, unlock when boot completes
+  useEffect(() => {
+    if (!showCTA) {
+      document.documentElement.style.overflow = "hidden";
+      document.body.style.overflow = "hidden";
+    } else {
+      document.documentElement.style.overflow = "";
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.documentElement.style.overflow = "";
+      document.body.style.overflow = "";
+    };
+  }, [showCTA]);
+
   // Boot lines sequencing
   useEffect(() => {
     BOOT_LINES.forEach((line, i) => {
@@ -227,7 +242,7 @@ export default function BootScreen({ onComplete }) {
   return (
     <section
       style={{
-        minHeight: "100vh",
+        height: "100vh",
         backgroundColor: "#050508",
         color: "#e0e0e0",
         fontFamily: "'JetBrains Mono', monospace",
