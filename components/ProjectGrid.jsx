@@ -175,7 +175,7 @@ function ProjectCard({ project, index, animate }) {
       style={{
         opacity: visible ? 1 : 0,
         transform: visible ? "translateY(0)" : "translateY(24px)",
-        transition: "opacity 0.5s ease, transform 0.5s ease",
+        transition: "all 0.3s ease, opacity 0.5s ease, transform 0.5s ease",
         position: "relative",
         cursor: "pointer",
         borderRadius: 8,
@@ -186,7 +186,6 @@ function ProjectCard({ project, index, animate }) {
         background: hovered
           ? `${project.color}05`
           : "rgba(255,255,255,0.015)",
-        transition: "all 0.3s ease, opacity 0.5s ease, transform 0.5s ease",
         boxShadow: hovered ? `0 0 30px ${project.color}15` : "none",
       }}
     >
@@ -211,14 +210,13 @@ function ProjectCard({ project, index, animate }) {
 
       {/* Default view */}
       <div style={{
-        padding: "24px",
+        padding: "clamp(16px, 3vw, 24px)",
         opacity: hovered ? 0 : 1,
         transition: "opacity 0.2s ease",
         position: hovered ? "absolute" : "relative",
         width: "100%",
         pointerEvents: hovered ? "none" : "all",
       }}>
-        {/* Top row */}
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
           <div style={{
             width: 8, height: 8, borderRadius: "50%",
@@ -234,7 +232,7 @@ function ProjectCard({ project, index, animate }) {
         </div>
 
         <div style={{
-          fontSize: 16,
+          fontSize: "clamp(14px, 2.5vw, 16px)",
           fontWeight: 800,
           color: "#fff",
           marginBottom: 6,
@@ -243,7 +241,7 @@ function ProjectCard({ project, index, animate }) {
           {project.name}
         </div>
         <div style={{
-          fontSize: 11,
+          fontSize: "clamp(10px, 1.8vw, 11px)",
           color: project.color,
           marginBottom: 16,
           letterSpacing: "0.05em",
@@ -251,11 +249,10 @@ function ProjectCard({ project, index, animate }) {
           {project.tagline}
         </div>
 
-        {/* Stack tags */}
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
           {project.stack.map((s) => (
             <span key={s} style={{
-              fontSize: 9,
+              fontSize: "clamp(8px, 1.5vw, 9px)",
               color: "rgba(255,255,255,0.4)",
               background: "rgba(255,255,255,0.04)",
               border: "1px solid rgba(255,255,255,0.07)",
@@ -273,17 +270,17 @@ function ProjectCard({ project, index, animate }) {
       {hovered && (
         <div style={{
           padding: "20px",
-          minHeight: 220,
+          minHeight: 200,
           animation: "termFadeIn 0.2s ease",
         }}>
           <pre style={{
-            fontSize: 10,
+            fontSize: "clamp(9px, 1.5vw, 10px)",
             lineHeight: 1.7,
             color: "rgba(255,255,255,0.65)",
             margin: 0,
             whiteSpace: "pre-wrap",
             wordBreak: "break-word",
-            fontFamily: "'JetBrains Mono', monospace",
+            fontFamily: "var(--font-mono)",
           }}>
             <span style={{ color: project.color }}>{catOutput.split("\n")[0]}</span>
             {"\n"}
@@ -300,13 +297,13 @@ function ProjectCard({ project, index, animate }) {
             ))}
           </pre>
 
-          {/* Links */}
           <div style={{
             display: "flex",
             gap: 10,
             marginTop: 12,
             borderTop: "1px solid rgba(255,255,255,0.06)",
             paddingTop: 12,
+            flexWrap: "wrap",
           }}>
             <a href={project.github} target="_blank" rel="noopener noreferrer" style={{
               fontSize: 10,
@@ -359,7 +356,7 @@ export default function ProjectGrid() {
         padding: "100px 24px",
         display: "flex",
         justifyContent: "center",
-        fontFamily: "'JetBrains Mono', monospace",
+        fontFamily: "var(--font-mono)",
         position: "relative",
         overflow: "hidden",
       }}
@@ -380,7 +377,7 @@ export default function ProjectGrid() {
           flexWrap: "wrap",
           alignItems: "center",
         }}>
-          <span style={{ fontSize: 11, color: "rgba(255,255,255,0.2)", marginRight: 4 }}>
+          <span style={{ fontSize: "clamp(9px, 2vw, 11px)", color: "rgba(255,255,255,0.2)", marginRight: 4 }}>
             $ ls ./projects
           </span>
           {FILTERS.map((f) => (
@@ -396,8 +393,8 @@ export default function ProjectGrid() {
                   : "1px solid rgba(255,255,255,0.1)",
                 color: activeFilter === f.id ? "#00f5ff" : "rgba(255,255,255,0.35)",
                 padding: "6px 14px",
-                fontFamily: "'JetBrains Mono', monospace",
-                fontSize: 11,
+                fontFamily: "var(--font-mono)",
+                fontSize: "clamp(9px, 2vw, 11px)",
                 letterSpacing: "0.1em",
                 borderRadius: 4,
                 cursor: "pointer",
@@ -419,7 +416,7 @@ export default function ProjectGrid() {
         {/* Grid */}
         <div style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
+          gridTemplateColumns: "repeat(auto-fill, minmax(min(280px, 100%), 1fr))",
           gap: 16,
         }}>
           {filtered.map((project, i) => (
@@ -436,7 +433,7 @@ export default function ProjectGrid() {
         <div style={{
           marginTop: 36,
           textAlign: "center",
-          fontSize: 11,
+          fontSize: "clamp(9px, 2vw, 11px)",
           color: "rgba(255,255,255,0.2)",
         }}>
           <a href="https://github.com/LennyDany-03" target="_blank" rel="noopener noreferrer"
@@ -445,11 +442,6 @@ export default function ProjectGrid() {
           </a>
         </div>
       </div>
-
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;900&display=swap');
-        @keyframes termFadeIn { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:translateY(0)} }
-      `}</style>
     </section>
   );
 }

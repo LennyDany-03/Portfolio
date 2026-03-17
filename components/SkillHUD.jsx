@@ -98,10 +98,8 @@ function RadarChart({ category, animate, size = 180 }) {
 
   const angle = (i) => (Math.PI * 2 * i) / n - Math.PI / 2;
 
-  // Grid circles
   const gridLevels = [0.25, 0.5, 0.75, 1];
 
-  // Skill polygon points
   const polyPoints = skills
     .map((s, i) => {
       const r = (s.level / 100) * maxR * progress;
@@ -112,7 +110,6 @@ function RadarChart({ category, animate, size = 180 }) {
 
   return (
     <svg width={size} height={size} style={{ overflow: "visible" }}>
-      {/* Grid */}
       {gridLevels.map((gl) =>
         skills.map((_, i) => {
           const a1 = angle(i);
@@ -132,7 +129,6 @@ function RadarChart({ category, animate, size = 180 }) {
         })
       )}
 
-      {/* Spokes */}
       {skills.map((_, i) => (
         <line
           key={i}
@@ -145,7 +141,6 @@ function RadarChart({ category, animate, size = 180 }) {
         />
       ))}
 
-      {/* Filled polygon */}
       <polygon
         points={polyPoints}
         fill={`${color}15`}
@@ -154,7 +149,6 @@ function RadarChart({ category, animate, size = 180 }) {
         style={{ filter: `drop-shadow(0 0 6px ${color}60)` }}
       />
 
-      {/* Axis labels */}
       {skills.map((s, i) => {
         const a = angle(i);
         const r = maxR + 16;
@@ -169,7 +163,7 @@ function RadarChart({ category, animate, size = 180 }) {
             dominantBaseline="middle"
             fontSize={7}
             fill={`${color}90`}
-            fontFamily="'JetBrains Mono', monospace"
+            fontFamily="var(--font-mono)"
             letterSpacing="0.05em"
           >
             {s.name.split(" ")[0].toUpperCase()}
@@ -177,7 +171,6 @@ function RadarChart({ category, animate, size = 180 }) {
         );
       })}
 
-      {/* Center dot */}
       <circle cx={cx} cy={cy} r={3} fill={color} opacity={0.8} />
     </svg>
   );
@@ -206,9 +199,11 @@ function HUDBar({ skill, color, animate, delay }) {
         justifyContent: "space-between",
         marginBottom: 5,
         alignItems: "center",
+        flexWrap: "wrap",
+        gap: 4,
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{ fontSize: 12, color: "#fff", fontWeight: 600 }}>{skill.name}</span>
+          <span style={{ fontSize: "clamp(10px, 2vw, 12px)", color: "#fff", fontWeight: 600 }}>{skill.name}</span>
           <span style={{
             fontSize: 8,
             color: `${color}`,
@@ -227,7 +222,6 @@ function HUDBar({ skill, color, animate, delay }) {
         </div>
       </div>
 
-      {/* Bar track */}
       <div style={{
         height: 4,
         background: "rgba(255,255,255,0.05)",
@@ -235,7 +229,6 @@ function HUDBar({ skill, color, animate, delay }) {
         overflow: "visible",
         position: "relative",
       }}>
-        {/* Tick marks */}
         {[25, 50, 75].map((t) => (
           <div key={t} style={{
             position: "absolute",
@@ -247,7 +240,6 @@ function HUDBar({ skill, color, animate, delay }) {
             background: "rgba(255,255,255,0.08)",
           }} />
         ))}
-        {/* Fill */}
         <div style={{
           height: "100%",
           width: `${width}%`,
@@ -257,7 +249,6 @@ function HUDBar({ skill, color, animate, delay }) {
           boxShadow: `0 0 10px ${color}60`,
           position: "relative",
         }}>
-          {/* Moving tip glow */}
           <div style={{
             position: "absolute",
             right: 0,
@@ -292,7 +283,7 @@ export default function SkillHUD() {
         padding: "100px 24px",
         display: "flex",
         justifyContent: "center",
-        fontFamily: "'JetBrains Mono', monospace",
+        fontFamily: "var(--font-mono)",
         position: "relative",
         overflow: "hidden",
       }}
@@ -331,8 +322,10 @@ export default function SkillHUD() {
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: 8,
           }}>
-            <span style={{ fontSize: 10, color: "rgba(0,245,255,0.5)", letterSpacing: "0.2em" }}>
+            <span style={{ fontSize: "clamp(8px, 1.5vw, 10px)", color: "rgba(0,245,255,0.5)", letterSpacing: "0.2em" }}>
               HUD.SKILL_MATRIX — LENNY.SYS
             </span>
             <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
@@ -357,13 +350,16 @@ export default function SkillHUD() {
           <div style={{
             display: "flex",
             borderBottom: "1px solid rgba(255,255,255,0.05)",
+            overflowX: "auto",
+            WebkitOverflowScrolling: "touch",
           }}>
             {SKILL_CATEGORIES.map((cat) => (
               <button
                 key={cat.id}
                 onClick={() => setActiveCategory(cat.id)}
                 style={{
-                  flex: 1,
+                  flex: "1 0 auto",
+                  minWidth: 80,
                   padding: "14px 8px",
                   background: activeCategory === cat.id
                     ? `${cat.color}08`
@@ -378,6 +374,7 @@ export default function SkillHUD() {
                   alignItems: "center",
                   gap: 4,
                   transition: "all 0.2s",
+                  fontFamily: "var(--font-mono)",
                 }}
               >
                 <span style={{
@@ -388,7 +385,7 @@ export default function SkillHUD() {
                   {cat.icon}
                 </span>
                 <span style={{
-                  fontSize: 9,
+                  fontSize: "clamp(7px, 1.5vw, 9px)",
                   letterSpacing: "0.18em",
                   color: activeCategory === cat.id ? cat.color : "rgba(255,255,255,0.25)",
                   transition: "color 0.2s",
@@ -401,18 +398,21 @@ export default function SkillHUD() {
           </div>
 
           {/* Content grid */}
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 220px",
-            gap: 0,
-          }}>
+          <div
+            className="grid-responsive"
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 220px",
+              gap: 0,
+            }}
+          >
             {/* Left: Bars */}
             <div style={{
-              padding: "32px 28px",
+              padding: "clamp(20px, 4vw, 32px) clamp(16px, 3vw, 28px)",
               borderRight: "1px solid rgba(255,255,255,0.04)",
             }}>
               <div style={{
-                fontSize: 10, color: `${active.color}60`,
+                fontSize: "clamp(8px, 1.5vw, 10px)", color: `${active.color}60`,
                 letterSpacing: "0.2em", marginBottom: 24,
               }}>
                 MODULE: {active.label} — {active.skills.length} SKILLS LOADED
@@ -490,7 +490,8 @@ export default function SkillHUD() {
             borderTop: "1px solid rgba(255,255,255,0.04)",
             padding: "10px 20px",
             display: "flex",
-            gap: 24,
+            gap: "clamp(12px, 3vw, 24px)",
+            flexWrap: "wrap",
           }}>
             {SKILL_CATEGORIES.map((cat) => (
               <div key={cat.id} style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -508,14 +509,6 @@ export default function SkillHUD() {
           </div>
         </div>
       </div>
-
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;900&display=swap');
-        @keyframes hudPulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
-        @media (max-width:640px) {
-          #skills > div > div > div:last-child { grid-template-columns: 1fr !important; }
-        }
-      `}</style>
     </section>
   );
 }

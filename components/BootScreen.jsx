@@ -25,7 +25,7 @@ const ROLES = [
 
 function GlitchText({ text }) {
   const [glitched, setGlitched] = useState(false);
-  const chars = "!@#$%^&*<>?/\\|[]{}ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  const chars = "!@#$%^&<>?/\\|[]{}ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -38,7 +38,7 @@ function GlitchText({ text }) {
   return (
     <span
       style={{
-        fontFamily: "'JetBrains Mono', monospace",
+        fontFamily: "var(--font-mono)",
         letterSpacing: glitched ? "0.15em" : "0.08em",
         transition: "letter-spacing 0.1s",
         position: "relative",
@@ -120,7 +120,6 @@ function Particles() {
         ctx.fill();
       });
 
-      // Draw connecting lines
       particles.forEach((p, i) => {
         particles.slice(i + 1).forEach((q) => {
           const dx = p.x - q.x;
@@ -169,7 +168,7 @@ export default function BootScreen({ onComplete }) {
   const [cursorVisible, setCursorVisible] = useState(true);
   const [showCTA, setShowCTA] = useState(false);
 
-  // Lock body scroll while BootScreen is loading, unlock when boot completes
+  // Lock body scroll while boot is loading, unlock when done
   useEffect(() => {
     if (!showCTA) {
       document.documentElement.style.overflow = "hidden";
@@ -227,14 +226,11 @@ export default function BootScreen({ onComplete }) {
 
   // Cursor blink
   useEffect(() => {
-    const interval = setInterval(
-      () => setCursorVisible((v) => !v),
-      500
-    );
+    const interval = setInterval(() => setCursorVisible((v) => !v), 500);
     return () => clearInterval(interval);
   }, []);
 
-  // Show CTA
+  // Show CTA after boot
   useEffect(() => {
     if (bootDone) setTimeout(() => setShowCTA(true), 800);
   }, [bootDone]);
@@ -245,7 +241,7 @@ export default function BootScreen({ onComplete }) {
         height: "100vh",
         backgroundColor: "#050508",
         color: "#e0e0e0",
-        fontFamily: "'JetBrains Mono', monospace",
+        fontFamily: "var(--font-mono)",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -348,7 +344,7 @@ export default function BootScreen({ onComplete }) {
               <div
                 key={i}
                 style={{
-                  fontSize: 13,
+                  fontSize: "clamp(10px, 2.5vw, 13px)",
                   lineHeight: "1.9",
                   color:
                     line.startsWith(">>")
@@ -385,6 +381,73 @@ export default function BootScreen({ onComplete }) {
               animation: "fadeInUp 0.8s ease forwards",
             }}
           >
+            {/* Profile photo */}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                marginBottom: 32,
+                animation: "fadeIn 1s ease forwards",
+              }}
+            >
+              <div
+                style={{
+                  position: "relative",
+                  width: "clamp(120px, 20vw, 160px)",
+                  height: "clamp(120px, 20vw, 160px)",
+                }}
+              >
+                {/* Outer glow ring */}
+                <div
+                  style={{
+                    position: "absolute",
+                    inset: -4,
+                    borderRadius: "50%",
+                    background:
+                      "conic-gradient(from 0deg, #00f5ff, #a78bfa, #00ff88, #00f5ff)",
+                    animation: "glowPulse 3s ease-in-out infinite",
+                    filter: "blur(1px)",
+                  }}
+                />
+                {/* Photo container */}
+                <div
+                  style={{
+                    position: "absolute",
+                    inset: 2,
+                    borderRadius: "50%",
+                    overflow: "hidden",
+                    border: "2px solid #050508",
+                  }}
+                >
+                  <img
+                    src="/Lenny.jpg"
+                    alt="Lenny Dany"
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                      objectPosition: "center top",
+                    }}
+                  />
+                </div>
+                {/* Status dot */}
+                <div
+                  style={{
+                    position: "absolute",
+                    bottom: 8,
+                    right: 8,
+                    width: 16,
+                    height: 16,
+                    borderRadius: "50%",
+                    backgroundColor: "#00ff88",
+                    border: "3px solid #050508",
+                    boxShadow: "0 0 10px #00ff88",
+                    animation: "pulse 2s infinite",
+                  }}
+                />
+              </div>
+            </div>
+
             {/* Status bar */}
             <div
               style={{
@@ -395,8 +458,8 @@ export default function BootScreen({ onComplete }) {
                 border: "1px solid rgba(0,245,255,0.2)",
                 borderRadius: 999,
                 padding: "6px 16px",
-                marginBottom: 40,
-                fontSize: 11,
+                marginBottom: 24,
+                fontSize: "clamp(9px, 2vw, 11px)",
                 color: "rgba(0,245,255,0.8)",
                 letterSpacing: "0.15em",
               }}
@@ -417,7 +480,7 @@ export default function BootScreen({ onComplete }) {
             {/* Name */}
             <h1
               style={{
-                fontSize: "clamp(48px, 8vw, 88px)",
+                fontSize: "clamp(36px, 8vw, 88px)",
                 fontWeight: 900,
                 margin: "0 0 8px",
                 lineHeight: 1,
@@ -432,9 +495,9 @@ export default function BootScreen({ onComplete }) {
             {/* Role typewriter */}
             <div
               style={{
-                fontSize: "clamp(14px, 2vw, 18px)",
+                fontSize: "clamp(12px, 2vw, 18px)",
                 color: "#00f5ff",
-                marginBottom: 48,
+                marginBottom: 40,
                 height: 28,
                 letterSpacing: "0.12em",
               }}
@@ -473,14 +536,15 @@ export default function BootScreen({ onComplete }) {
                     border: "1px solid rgba(0,245,255,0.5)",
                     color: "#00f5ff",
                     padding: "12px 28px",
-                    fontFamily: "'JetBrains Mono', monospace",
-                    fontSize: 13,
+                    fontFamily: "var(--font-mono)",
+                    fontSize: "clamp(11px, 2vw, 13px)",
                     letterSpacing: "0.1em",
                     cursor: "pointer",
                     borderRadius: 4,
                     transition: "all 0.2s",
                     position: "relative",
                     overflow: "hidden",
+                    minWidth: 160,
                   }}
                   onMouseEnter={(e) => {
                     e.target.style.background = "rgba(0,245,255,0.08)";
@@ -504,12 +568,13 @@ export default function BootScreen({ onComplete }) {
                     border: "1px solid rgba(0,245,255,0.6)",
                     color: "#fff",
                     padding: "12px 28px",
-                    fontFamily: "'JetBrains Mono', monospace",
-                    fontSize: 13,
+                    fontFamily: "var(--font-mono)",
+                    fontSize: "clamp(11px, 2vw, 13px)",
                     letterSpacing: "0.1em",
                     cursor: "pointer",
                     borderRadius: 4,
                     transition: "all 0.2s",
+                    minWidth: 160,
                   }}
                   onMouseEnter={(e) => {
                     e.target.style.background = "rgba(0,245,255,0.18)";
@@ -529,7 +594,7 @@ export default function BootScreen({ onComplete }) {
             {showCTA && (
               <div
                 style={{
-                  marginTop: 64,
+                  marginTop: 48,
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
@@ -560,14 +625,6 @@ export default function BootScreen({ onComplete }) {
           </div>
         )}
       </div>
-
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;900&display=swap');
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes pulse { 0%, 100% { opacity: 1; box-shadow: 0 0 8px #00ff88; } 50% { opacity: 0.5; box-shadow: 0 0 4px #00ff88; } }
-        @keyframes scrollPulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
-      `}</style>
     </section>
   );
 }

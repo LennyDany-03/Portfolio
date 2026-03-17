@@ -148,11 +148,10 @@ function CommitCard({ commit, index, animate }) {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        marginRight: 20,
+        marginRight: "clamp(12px, 3vw, 20px)",
         flexShrink: 0,
         width: 20,
       }}>
-        {/* Dot */}
         <div style={{
           width: 12,
           height: 12,
@@ -164,7 +163,6 @@ function CommitCard({ commit, index, animate }) {
           zIndex: 1,
           position: "relative",
         }} />
-        {/* Line */}
         {index < COMMITS.length - 1 && (
           <div style={{
             width: 1,
@@ -186,7 +184,7 @@ function CommitCard({ commit, index, animate }) {
             : "rgba(255,255,255,0.02)",
           border: `1px solid ${expanded ? commit.color + "30" : "rgba(255,255,255,0.06)"}`,
           borderRadius: 8,
-          padding: "16px 20px",
+          padding: "clamp(12px, 3vw, 16px) clamp(14px, 3vw, 20px)",
           cursor: "pointer",
           transition: "all 0.2s ease",
         }}
@@ -207,13 +205,12 @@ function CommitCard({ commit, index, animate }) {
         <div style={{
           display: "flex",
           alignItems: "center",
-          gap: 10,
+          gap: "clamp(6px, 1.5vw, 10px)",
           flexWrap: "wrap",
           marginBottom: 8,
         }}>
-          {/* Commit type badge */}
           <span style={{
-            fontSize: 9,
+            fontSize: "clamp(8px, 1.5vw, 9px)",
             fontWeight: 700,
             letterSpacing: "0.15em",
             color: TYPE_COLORS[commit.type] || "#fff",
@@ -225,9 +222,8 @@ function CommitCard({ commit, index, animate }) {
             {commit.type.toUpperCase()}
           </span>
 
-          {/* Hash */}
           <span style={{
-            fontSize: 11,
+            fontSize: "clamp(9px, 1.5vw, 11px)",
             color: "#fbbf24",
             letterSpacing: "0.05em",
             fontFamily: "monospace",
@@ -235,8 +231,7 @@ function CommitCard({ commit, index, animate }) {
             {commit.hash}
           </span>
 
-          {/* Branch */}
-          <span style={{
+          <span className="hide-on-mobile" style={{
             fontSize: 10,
             color: "#a78bfa",
             background: "rgba(167,139,250,0.08)",
@@ -247,7 +242,6 @@ function CommitCard({ commit, index, animate }) {
             ⎇ {commit.branch}
           </span>
 
-          {/* Tag */}
           {commit.tag && (
             <span style={{
               fontSize: 10,
@@ -261,10 +255,9 @@ function CommitCard({ commit, index, animate }) {
             </span>
           )}
 
-          {/* Date — pushed right */}
           <span style={{
             marginLeft: "auto",
-            fontSize: 11,
+            fontSize: "clamp(9px, 1.5vw, 11px)",
             color: "rgba(255,255,255,0.25)",
           }}>
             {commit.date}
@@ -273,7 +266,7 @@ function CommitCard({ commit, index, animate }) {
 
         {/* Title */}
         <div style={{
-          fontSize: 14,
+          fontSize: "clamp(12px, 2vw, 14px)",
           fontWeight: 700,
           color: "#fff",
           marginBottom: expanded ? 12 : 0,
@@ -286,7 +279,7 @@ function CommitCard({ commit, index, animate }) {
         {expanded && (
           <div style={{ animation: "expandIn 0.25s ease" }}>
             <p style={{
-              fontSize: 12,
+              fontSize: "clamp(10px, 1.8vw, 12px)",
               color: "rgba(255,255,255,0.55)",
               lineHeight: 1.7,
               margin: "0 0 14px",
@@ -296,7 +289,7 @@ function CommitCard({ commit, index, animate }) {
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
               {commit.stack.map((s) => (
                 <span key={s} style={{
-                  fontSize: 10,
+                  fontSize: "clamp(8px, 1.5vw, 10px)",
                   color: "rgba(255,255,255,0.5)",
                   background: "rgba(255,255,255,0.04)",
                   border: "1px solid rgba(255,255,255,0.08)",
@@ -341,7 +334,7 @@ export default function GitLog() {
         padding: "100px 24px",
         display: "flex",
         justifyContent: "center",
-        fontFamily: "'JetBrains Mono', monospace",
+        fontFamily: "var(--font-mono)",
         position: "relative",
       }}
     >
@@ -376,23 +369,30 @@ export default function GitLog() {
           alignItems: "center",
           justifyContent: "space-between",
           borderBottom: "1px solid rgba(0,245,255,0.06)",
+          gap: 10,
         }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
             {["#ff5f56", "#ffbd2e", "#27c93f"].map((c) => (
               <div key={c} style={{ width: 10, height: 10, borderRadius: "50%", backgroundColor: c }} />
             ))}
           </div>
-          <span style={{
+          <span className="hide-on-mobile" style={{
             fontSize: 11, color: "rgba(255,255,255,0.25)",
             letterSpacing: "0.12em",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+            flex: 1,
+            textAlign: "center",
           }}>
-            git log --oneline --graph --all --author="Lenny"
+            git log --oneline --graph --all --author=&quot;Lenny&quot;
           </span>
           <span style={{
             fontSize: 10, color: "#00ff88",
             background: "rgba(0,255,136,0.08)",
             border: "1px solid rgba(0,255,136,0.15)",
             borderRadius: 3, padding: "2px 8px",
+            flexShrink: 0,
           }}>
             {COMMITS.length} commits
           </span>
@@ -404,7 +404,7 @@ export default function GitLog() {
           border: "1px solid rgba(0,245,255,0.08)",
           borderTop: "none",
           borderRadius: "0 0 8px 8px",
-          padding: "28px 24px 20px",
+          padding: "clamp(16px, 4vw, 28px) clamp(16px, 4vw, 24px) 20px",
         }}>
           {COMMITS.map((commit, i) => (
             <CommitCard
@@ -419,7 +419,7 @@ export default function GitLog() {
         {/* Footer */}
         <div style={{
           marginTop: 16,
-          fontSize: 11,
+          fontSize: "clamp(9px, 2vw, 11px)",
           color: "rgba(255,255,255,0.2)",
           textAlign: "center",
           letterSpacing: "0.1em",
@@ -429,11 +429,6 @@ export default function GitLog() {
           <span style={{ color: "#00ff88" }}>actively pushing</span>
         </div>
       </div>
-
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;900&display=swap');
-        @keyframes expandIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
-      `}</style>
     </section>
   );
 }

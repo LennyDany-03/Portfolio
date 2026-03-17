@@ -1,15 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 
-const ASCII_LOGO = `
- ██╗     ███████╗███╗   ██╗███╗   ██╗██╗   ██╗
- ██║     ██╔════╝████╗  ██║████╗  ██║╚██╗ ██╔╝
- ██║     █████╗  ██╔██╗ ██║██╔██╗ ██║ ╚████╔╝ 
- ██║     ██╔══╝  ██║╚██╗██║██║╚██╗██║  ╚██╔╝  
- ███████╗███████╗██║ ╚████║██║ ╚████║   ██║   
- ╚══════╝╚══════╝╚═╝  ╚═══╝╚═╝  ╚═══╝   ╚═╝   
-`;
-
 const STATS = [
   { label: "Name", value: "Lenny Dany Derek D", color: "#00f5ff" },
   { label: "Age", value: "19", color: "#00f5ff" },
@@ -111,7 +102,7 @@ export default function Neofetch() {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        fontFamily: "'JetBrains Mono', monospace",
+        fontFamily: "var(--font-mono)",
         position: "relative",
         overflow: "hidden",
       }}
@@ -165,34 +156,72 @@ export default function Neofetch() {
           </div>
 
           {/* Content */}
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: 0,
-          }}>
-            {/* Left: ASCII + color palette */}
+          <div
+            className="grid-responsive"
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: 0,
+            }}
+          >
+            {/* Left: Photo + Skills */}
             <div style={{
               padding: "36px 32px",
               borderRight: "1px solid rgba(0,245,255,0.06)",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
             }}>
-              {/* ASCII Art */}
-              <pre style={{
-                fontSize: "clamp(4px, 1vw, 8px)",
-                lineHeight: 1.2,
-                color: "#00f5ff",
-                textShadow: "0 0 10px rgba(0,245,255,0.5)",
-                margin: "0 0 32px",
-                opacity: inView ? 1 : 0,
-                transition: "opacity 0.8s ease",
-                overflow: "hidden",
-              }}>
-                {ASCII_LOGO}
-              </pre>
+              {/* Profile Photo */}
+              <div
+                style={{
+                  position: "relative",
+                  width: "clamp(100px, 18vw, 140px)",
+                  height: "clamp(100px, 18vw, 140px)",
+                  marginBottom: 24,
+                  flexShrink: 0,
+                }}
+              >
+                <div
+                  style={{
+                    position: "absolute",
+                    inset: -3,
+                    borderRadius: 12,
+                    background: "conic-gradient(from 0deg, #00f5ff, #a78bfa, #00ff88, #00f5ff)",
+                    animation: "glowPulse 4s ease-in-out infinite",
+                    filter: "blur(1px)",
+                  }}
+                />
+                <div
+                  style={{
+                    position: "absolute",
+                    inset: 2,
+                    borderRadius: 10,
+                    overflow: "hidden",
+                    border: "2px solid #050508",
+                  }}
+                >
+                  <img
+                    src="/Lenny.jpg"
+                    alt="Lenny Dany"
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                      objectPosition: "center top",
+                    }}
+                  />
+                </div>
+              </div>
 
               {/* Prompt line */}
               <div style={{
-                fontSize: 12, marginBottom: 28, lineHeight: 1.8,
+                fontSize: "clamp(10px, 2vw, 12px)",
+                marginBottom: 24,
+                lineHeight: 1.8,
                 color: "rgba(255,255,255,0.5)",
+                alignSelf: "flex-start",
+                width: "100%",
               }}>
                 <span style={{ color: "#00ff88" }}>lenny</span>
                 <span style={{ color: "rgba(255,255,255,0.3)" }}>@</span>
@@ -207,6 +236,7 @@ export default function Neofetch() {
                 border: "1px solid rgba(0,245,255,0.08)",
                 borderRadius: 6,
                 padding: "20px",
+                width: "100%",
               }}>
                 <div style={{
                   fontSize: 10, letterSpacing: "0.2em",
@@ -225,7 +255,7 @@ export default function Neofetch() {
               </div>
 
               {/* Color palette */}
-              <div style={{ display: "flex", gap: 6, marginTop: 24 }}>
+              <div style={{ display: "flex", gap: 6, marginTop: 24, alignSelf: "flex-start" }}>
                 {COLOR_PALETTE.map((c) => (
                   <div key={c} style={{
                     width: 20, height: 20, borderRadius: 3,
@@ -248,14 +278,14 @@ export default function Neofetch() {
                     opacity: revealed > i ? 1 : 0,
                     transform: revealed > i ? "translateX(0)" : "translateX(-8px)",
                     transition: "opacity 0.3s ease, transform 0.3s ease",
-                    fontSize: 13,
+                    fontSize: "clamp(11px, 2vw, 13px)",
                     lineHeight: "1.7",
                     alignItems: "baseline",
                   }}
                 >
                   <span style={{
                     color: stat.color,
-                    minWidth: 120,
+                    minWidth: "clamp(80px, 12vw, 120px)",
                     fontWeight: 700,
                     flexShrink: 0,
                   }}>
@@ -275,7 +305,7 @@ export default function Neofetch() {
                 background: "linear-gradient(90deg, rgba(0,245,255,0.15), transparent)",
               }} />
 
-              {/* Currently open to */}
+              {/* Open to */}
               <div style={{
                 background: "rgba(0,255,136,0.05)",
                 border: "1px solid rgba(0,255,136,0.15)",
@@ -295,7 +325,7 @@ export default function Neofetch() {
                   "Open Source Contributions",
                 ].map((item) => (
                   <div key={item} style={{
-                    fontSize: 12, color: "rgba(255,255,255,0.6)",
+                    fontSize: "clamp(10px, 2vw, 12px)", color: "rgba(255,255,255,0.6)",
                     marginBottom: 6, display: "flex", gap: 8, alignItems: "center",
                   }}>
                     <span style={{ color: "#00ff88", fontSize: 10 }}>▸</span>
@@ -312,7 +342,7 @@ export default function Neofetch() {
                     border: "1px solid rgba(167,139,250,0.2)",
                     borderRadius: 4,
                     padding: "4px 12px",
-                    fontSize: 11,
+                    fontSize: "clamp(9px, 2vw, 11px)",
                     color: "rgba(255,255,255,0.6)",
                   }}>
                     {h}
@@ -323,13 +353,6 @@ export default function Neofetch() {
           </div>
         </div>
       </div>
-
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;900&display=swap');
-        @media (max-width: 768px) {
-          #about .neofetch-grid { grid-template-columns: 1fr !important; }
-        }
-      `}</style>
     </section>
   );
 }

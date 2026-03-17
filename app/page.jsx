@@ -64,7 +64,6 @@ function Navbar() {
     const onScroll = () => {
       setScrolled(window.scrollY > 60);
 
-      // Active section detection
       const sections = NAV_ITEMS.map((n) => ({
         id: n.id,
         el: document.getElementById(n.id),
@@ -95,7 +94,7 @@ function Navbar() {
         left: 0,
         right: 0,
         zIndex: 900,
-        padding: "0 32px",
+        padding: "0 clamp(16px, 4vw, 32px)",
         height: 60,
         display: "flex",
         alignItems: "center",
@@ -108,7 +107,7 @@ function Navbar() {
           : "1px solid transparent",
         backdropFilter: scrolled ? "blur(20px)" : "none",
         transition: "all 0.3s ease",
-        fontFamily: "'JetBrains Mono', monospace",
+        fontFamily: "var(--font-mono)",
       }}>
         {/* Logo */}
         <button
@@ -124,11 +123,11 @@ function Navbar() {
           }}
         >
           <span style={{
-            fontSize: 16,
+            fontSize: "clamp(14px, 2.5vw, 16px)",
             fontWeight: 900,
             color: "#fff",
             letterSpacing: "0.08em",
-            fontFamily: "'JetBrains Mono', monospace",
+            fontFamily: "var(--font-mono)",
           }}>
             LENNY
           </span>
@@ -170,7 +169,7 @@ function Navbar() {
                 color: activeSection === item.id
                   ? "#00f5ff"
                   : "rgba(255,255,255,0.4)",
-                fontFamily: "'JetBrains Mono', monospace",
+                fontFamily: "var(--font-mono)",
                 fontSize: 11,
                 letterSpacing: "0.12em",
               }}
@@ -202,11 +201,12 @@ function Navbar() {
             href="https://github.com/LennyDany-03"
             target="_blank"
             rel="noopener noreferrer"
+            className="hide-on-mobile"
             style={{
               fontSize: 11,
               color: "rgba(255,255,255,0.4)",
               textDecoration: "none",
-              fontFamily: "'JetBrains Mono', monospace",
+              fontFamily: "var(--font-mono)",
               letterSpacing: "0.1em",
               padding: "5px 10px",
               border: "1px solid rgba(255,255,255,0.1)",
@@ -239,7 +239,7 @@ function Navbar() {
               padding: "5px 8px",
               cursor: "pointer",
               color: "rgba(255,255,255,0.5)",
-              fontFamily: "'JetBrains Mono', monospace",
+              fontFamily: "var(--font-mono)",
               fontSize: 14,
               display: "none",
             }}
@@ -263,7 +263,7 @@ function Navbar() {
           display: "flex",
           flexDirection: "column",
           gap: 4,
-          fontFamily: "'JetBrains Mono', monospace",
+          fontFamily: "var(--font-mono)",
           backdropFilter: "blur(20px)",
           animation: "mobileMenuIn 0.2s ease",
         }}>
@@ -279,7 +279,7 @@ function Navbar() {
                 textAlign: "left",
                 borderBottom: "1px solid rgba(255,255,255,0.05)",
                 color: activeSection === item.id ? "#00f5ff" : "rgba(255,255,255,0.5)",
-                fontFamily: "'JetBrains Mono', monospace",
+                fontFamily: "var(--font-mono)",
                 fontSize: 13,
                 letterSpacing: "0.12em",
                 display: "flex",
@@ -291,16 +291,27 @@ function Navbar() {
               {item.label}
             </button>
           ))}
+
+          {/* Mobile GitHub link */}
+          <a
+            href="https://github.com/LennyDany-03"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "12px 0",
+              textDecoration: "none",
+              color: "rgba(255,255,255,0.4)",
+              fontSize: 12,
+              letterSpacing: "0.1em",
+            }}
+          >
+            ⬡ GitHub
+          </a>
         </div>
       )}
-
-      <style>{`
-        @media (max-width: 640px) {
-          .desktop-nav { display: none !important; }
-          .mobile-menu-btn { display: flex !important; }
-        }
-        @keyframes mobileMenuIn { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
-      `}</style>
     </>
   );
 }
@@ -342,7 +353,7 @@ function BackToTop() {
         padding: "8px 12px",
         cursor: "pointer",
         color: "rgba(255,255,255,0.4)",
-        fontFamily: "'JetBrains Mono', monospace",
+        fontFamily: "var(--font-mono)",
         fontSize: 10,
         letterSpacing: "0.1em",
         backdropFilter: "blur(8px)",
@@ -363,40 +374,119 @@ function BackToTop() {
   );
 }
 
+// ─── Custom cursor ───────────────────────────────────────────────────────────
+function CustomCursor() {
+  const dotRef = useRef(null);
+  const ringRef = useRef(null);
+  const pos = useRef({ x: 0, y: 0 });
+  const ring = useRef({ x: 0, y: 0 });
+  const [clicking, setClicking] = useState(false);
+  const [hovering, setHovering] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    // Detect touch device — hide custom cursor
+    const checkMobile = () => {
+      setIsMobile(
+        window.matchMedia("(hover: none)").matches ||
+        window.matchMedia("(pointer: coarse)").matches
+      );
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+
+    const onMove = (e) => {
+      pos.current = { x: e.clientX, y: e.clientY };
+      if (dotRef.current) {
+        dotRef.current.style.transform = `translate(${e.clientX - 4}px, ${e.clientY - 4}px)`;
+      }
+    };
+
+    let animId;
+    const animateRing = () => {
+      ring.current.x += (pos.current.x - ring.current.x) * 0.12;
+      ring.current.y += (pos.current.y - ring.current.y) * 0.12;
+      if (ringRef.current) {
+        ringRef.current.style.transform = `translate(${ring.current.x - 16}px, ${ring.current.y - 16}px)`;
+      }
+      animId = requestAnimationFrame(animateRing);
+    };
+    animId = requestAnimationFrame(animateRing);
+
+    const onDown = () => setClicking(true);
+    const onUp = () => setClicking(false);
+
+    const onHoverIn = (e) => {
+      if (e.target.matches("a, button, [role='button']")) setHovering(true);
+    };
+    const onHoverOut = (e) => {
+      if (e.target.matches("a, button, [role='button']")) setHovering(false);
+    };
+
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mousedown", onDown);
+    window.addEventListener("mouseup", onUp);
+    document.addEventListener("mouseover", onHoverIn);
+    document.addEventListener("mouseout", onHoverOut);
+
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mousedown", onDown);
+      window.removeEventListener("mouseup", onUp);
+      document.removeEventListener("mouseover", onHoverIn);
+      document.removeEventListener("mouseout", onHoverOut);
+      window.removeEventListener("resize", checkMobile);
+      cancelAnimationFrame(animId);
+    };
+  }, []);
+
+  if (isMobile) return null;
+
+  return (
+    <>
+      <div
+        ref={dotRef}
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: 8,
+          height: 8,
+          borderRadius: "50%",
+          backgroundColor: clicking ? "#00ff88" : "#00f5ff",
+          boxShadow: `0 0 8px ${clicking ? "#00ff88" : "#00f5ff"}`,
+          pointerEvents: "none",
+          zIndex: 99999,
+          transition: "background-color 0.1s, box-shadow 0.1s",
+          willChange: "transform",
+        }}
+      />
+      <div
+        ref={ringRef}
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: 32,
+          height: 32,
+          borderRadius: "50%",
+          border: `1px solid ${hovering ? "rgba(0,245,255,0.7)" : "rgba(0,245,255,0.3)"}`,
+          transform: hovering ? "scale(1.4)" : "scale(1)",
+          pointerEvents: "none",
+          zIndex: 99998,
+          transition: "border-color 0.15s, width 0.15s, height 0.15s",
+          willChange: "transform",
+        }}
+      />
+    </>
+  );
+}
+
 // ─── Page ────────────────────────────────────────────────────────────────────
 export default function Page() {
   return (
     <>
-      {/* Global styles */}
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;900&display=swap');
-
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-        html { scroll-behavior: smooth; }
-
-        body {
-          background-color: #050508;
-          color: #e0e0e0;
-          font-family: 'JetBrains Mono', monospace;
-          overflow-x: hidden;
-          cursor: default;
-        }
-
-        /* Custom scrollbar */
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-track { background: #050508; }
-        ::-webkit-scrollbar-thumb { background: rgba(0,245,255,0.2); border-radius: 99px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(0,245,255,0.4); }
-
-        /* Custom cursor crosshair dot */
-        body { cursor: none; }
-        a, button { cursor: none; }
-
-        @keyframes fadeIn { from{opacity:0} to{opacity:1} }
-      `}</style>
-
-      {/* Custom cursor */}
+      {/* Custom cursor — hidden on touch devices */}
       <CustomCursor />
 
       {/* Scroll progress bar */}
@@ -444,102 +534,6 @@ export default function Page() {
       <JarvisChat />   {/* Bottom-right AI chat */}
       <Terminal />     {/* Bottom-left hidden terminal — press ` */}
       <BackToTop />    {/* Bottom-right ↑ top */}
-    </>
-  );
-}
-
-// ─── Custom cursor ───────────────────────────────────────────────────────────
-function CustomCursor() {
-  const dotRef = useRef(null);
-  const ringRef = useRef(null);
-  const pos = useRef({ x: 0, y: 0 });
-  const ring = useRef({ x: 0, y: 0 });
-  const [clicking, setClicking] = useState(false);
-  const [hovering, setHovering] = useState(false);
-
-  useEffect(() => {
-    const onMove = (e) => {
-      pos.current = { x: e.clientX, y: e.clientY };
-      if (dotRef.current) {
-        dotRef.current.style.transform = `translate(${e.clientX - 4}px, ${e.clientY - 4}px)`;
-      }
-    };
-
-    let animId;
-    const animateRing = () => {
-      ring.current.x += (pos.current.x - ring.current.x) * 0.12;
-      ring.current.y += (pos.current.y - ring.current.y) * 0.12;
-      if (ringRef.current) {
-        ringRef.current.style.transform = `translate(${ring.current.x - 16}px, ${ring.current.y - 16}px)`;
-      }
-      animId = requestAnimationFrame(animateRing);
-    };
-    animId = requestAnimationFrame(animateRing);
-
-    const onDown = () => setClicking(true);
-    const onUp = () => setClicking(false);
-
-    const onHoverIn = (e) => {
-      if (e.target.matches("a, button, [role='button']")) setHovering(true);
-    };
-    const onHoverOut = (e) => {
-      if (e.target.matches("a, button, [role='button']")) setHovering(false);
-    };
-
-    window.addEventListener("mousemove", onMove);
-    window.addEventListener("mousedown", onDown);
-    window.addEventListener("mouseup", onUp);
-    document.addEventListener("mouseover", onHoverIn);
-    document.addEventListener("mouseout", onHoverOut);
-
-    return () => {
-      window.removeEventListener("mousemove", onMove);
-      window.removeEventListener("mousedown", onDown);
-      window.removeEventListener("mouseup", onUp);
-      document.removeEventListener("mouseover", onHoverIn);
-      document.removeEventListener("mouseout", onHoverOut);
-      cancelAnimationFrame(animId);
-    };
-  }, []);
-
-  return (
-    <>
-      {/* Dot */}
-      <div
-        ref={dotRef}
-        style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          width: 8,
-          height: 8,
-          borderRadius: "50%",
-          backgroundColor: clicking ? "#00ff88" : "#00f5ff",
-          boxShadow: `0 0 8px ${clicking ? "#00ff88" : "#00f5ff"}`,
-          pointerEvents: "none",
-          zIndex: 99999,
-          transition: "background-color 0.1s, box-shadow 0.1s",
-          willChange: "transform",
-        }}
-      />
-      {/* Ring */}
-      <div
-        ref={ringRef}
-        style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          width: 32,
-          height: 32,
-          borderRadius: "50%",
-          border: `1px solid ${hovering ? "rgba(0,245,255,0.7)" : "rgba(0,245,255,0.3)"}`,
-          transform: hovering ? "scale(1.4)" : "scale(1)",
-          pointerEvents: "none",
-          zIndex: 99998,
-          transition: "border-color 0.15s, width 0.15s, height 0.15s",
-          willChange: "transform",
-        }}
-      />
     </>
   );
 }

@@ -27,18 +27,16 @@ export default function SSHContact() {
 
   const [formState, setFormState] = useState({ name: "", email: "", subject: "", message: "" });
   const [focused, setFocused] = useState(null);
-  const [status, setStatus] = useState("idle"); // idle | sending | success | error
+  const [status, setStatus] = useState("idle");
   const [outputLines, setOutputLines] = useState([]);
   const [cursorVisible, setCursorVisible] = useState(true);
   const outputRef = useRef(null);
 
-  // Cursor blink
   useEffect(() => {
     const i = setInterval(() => setCursorVisible((v) => !v), 530);
     return () => clearInterval(i);
   }, []);
 
-  // Initial terminal output on section enter
   useEffect(() => {
     if (!inView) return;
     const lines = [
@@ -74,7 +72,6 @@ export default function SSHContact() {
       { text: "Encrypting payload...", color: "rgba(255,255,255,0.4)" },
     ]);
 
-    // Simulate send (replace with real emailjs / formspree / API call)
     await new Promise((r) => setTimeout(r, 1800));
 
     setStatus("success");
@@ -93,8 +90,8 @@ export default function SSHContact() {
     border: "none",
     borderBottom: `1px solid ${focused === field ? "rgba(0,245,255,0.5)" : "rgba(255,255,255,0.1)"}`,
     color: "#fff",
-    fontFamily: "'JetBrains Mono', monospace",
-    fontSize: 13,
+    fontFamily: "var(--font-mono)",
+    fontSize: "clamp(11px, 2vw, 13px)",
     padding: "10px 4px",
     outline: "none",
     transition: "all 0.2s",
@@ -112,7 +109,7 @@ export default function SSHContact() {
         padding: "100px 24px",
         display: "flex",
         justifyContent: "center",
-        fontFamily: "'JetBrains Mono', monospace",
+        fontFamily: "var(--font-mono)",
         position: "relative",
         overflow: "hidden",
       }}
@@ -136,11 +133,14 @@ export default function SSHContact() {
           <span style={{ color: "rgba(255,255,255,0.4)", fontSize: 12, letterSpacing: "0.15em" }}>CONTACT</span>
         </div>
 
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: 24,
-        }}>
+        <div
+          className="grid-responsive"
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: 24,
+          }}
+        >
           {/* Left: Terminal output + Social */}
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             {/* Terminal output */}
@@ -151,7 +151,6 @@ export default function SSHContact() {
               overflow: "hidden",
               flex: 1,
             }}>
-              {/* Title bar */}
               <div style={{
                 background: "rgba(255,255,255,0.02)",
                 borderBottom: "1px solid rgba(255,255,255,0.05)",
@@ -171,15 +170,14 @@ export default function SSHContact() {
                 </span>
               </div>
 
-              {/* Output */}
               <div
                 ref={outputRef}
                 style={{
                   padding: "20px",
-                  minHeight: 220,
+                  minHeight: 200,
                   maxHeight: 280,
                   overflowY: "auto",
-                  fontSize: 12,
+                  fontSize: "clamp(10px, 2vw, 12px)",
                   lineHeight: 1.8,
                 }}
               >
@@ -243,10 +241,10 @@ export default function SSHContact() {
                   }}
                 >
                   <span style={{ color: link.color, fontSize: 12 }}>{link.icon}</span>
-                  <span style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", minWidth: 80 }}>
+                  <span style={{ fontSize: "clamp(9px, 2vw, 11px)", color: "rgba(255,255,255,0.4)", minWidth: 80 }}>
                     {link.label}
                   </span>
-                  <span style={{ fontSize: 11, color: link.color }}>{link.handle}</span>
+                  <span style={{ fontSize: "clamp(9px, 2vw, 11px)", color: link.color }}>{link.handle}</span>
                 </a>
               ))}
             </div>
@@ -259,7 +257,6 @@ export default function SSHContact() {
             borderRadius: 8,
             overflow: "hidden",
           }}>
-            {/* Form header */}
             <div style={{
               background: "rgba(0,245,255,0.04)",
               borderBottom: "1px solid rgba(0,245,255,0.08)",
@@ -267,8 +264,10 @@ export default function SSHContact() {
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
+              flexWrap: "wrap",
+              gap: 8,
             }}>
-              <span style={{ fontSize: 10, color: "rgba(0,245,255,0.7)", letterSpacing: "0.15em" }}>
+              <span style={{ fontSize: "clamp(8px, 1.5vw, 10px)", color: "rgba(0,245,255,0.7)", letterSpacing: "0.15em" }}>
                 COMPOSE_PACKET
               </span>
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -284,8 +283,7 @@ export default function SSHContact() {
               </div>
             </div>
 
-            {/* Form fields */}
-            <div style={{ padding: "24px 20px" }}>
+            <div style={{ padding: "clamp(16px, 3vw, 24px) 20px" }}>
               {/* Name */}
               <div style={{ marginBottom: 20 }}>
                 <label style={{
@@ -303,10 +301,7 @@ export default function SSHContact() {
                   onFocus={() => setFocused("name")}
                   onBlur={() => setFocused(null)}
                   placeholder="Your name"
-                  style={{
-                    ...inputStyle("name"),
-                    "::placeholder": { color: "rgba(255,255,255,0.15)" },
-                  }}
+                  style={inputStyle("name")}
                 />
               </div>
 
@@ -389,8 +384,8 @@ export default function SSHContact() {
                     : "rgba(0,245,255,0.08)",
                   border: `1px solid ${status === "success" ? "rgba(0,255,136,0.4)" : "rgba(0,245,255,0.4)"}`,
                   color: status === "success" ? "#00ff88" : "#00f5ff",
-                  fontFamily: "'JetBrains Mono', monospace",
-                  fontSize: 12,
+                  fontFamily: "var(--font-mono)",
+                  fontSize: "clamp(10px, 2vw, 12px)",
                   letterSpacing: "0.15em",
                   borderRadius: 4,
                   cursor: status === "sending" || status === "success" ? "default" : "pointer",
@@ -420,29 +415,25 @@ export default function SSHContact() {
 
         {/* Footer */}
         <div style={{
-          marginTop: 40,
+          marginTop: 60,
           textAlign: "center",
-          fontSize: 11,
+          fontSize: "clamp(9px, 2vw, 11px)",
           color: "rgba(255,255,255,0.15)",
           letterSpacing: "0.1em",
+          padding: "24px 0",
+          borderTop: "1px solid rgba(255,255,255,0.04)",
         }}>
-          Built with{" "}
-          <span style={{ color: "#00f5ff" }}>Next.js</span> ·{" "}
-          <span style={{ color: "#a78bfa" }}>Tailwind</span> ·{" "}
-          <span style={{ color: "#00ff88" }}>Claude API</span>{" "}
-          — © {new Date().getFullYear()} Lenny Dany
+          <div style={{ marginBottom: 12 }}>
+            Built with{" "}
+            <span style={{ color: "#00f5ff" }}>Next.js</span> ·{" "}
+            <span style={{ color: "#a78bfa" }}>Custom CSS</span> ·{" "}
+            <span style={{ color: "#00ff88" }}>Claude API</span>
+          </div>
+          <div style={{ color: "rgba(255,255,255,0.1)" }}>
+            © {new Date().getFullYear()} Lenny Dany Derek D — All rights reserved
+          </div>
         </div>
       </div>
-
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;900&display=swap');
-        @keyframes lineReveal { from{opacity:0;transform:translateX(-4px)} to{opacity:1;transform:translateX(0)} }
-        @keyframes hudPulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
-        input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.18); font-family:'JetBrains Mono',monospace; }
-        @media (max-width: 640px) {
-          #contact > div > div:last-child { grid-template-columns: 1fr !important; }
-        }
-      `}</style>
     </section>
   );
 }
