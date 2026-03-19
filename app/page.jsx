@@ -10,6 +10,7 @@ import SSHContact from "@/components/SSHContact";
 import JarvisChat from "@/components/JarvisChat";
 import Terminal from "@/components/Terminal";
 
+// ─── Nav config ─────────────────────────────────────────────────────────────
 const NAV_ITEMS = [
   { id: "about",      label: "about",      index: "02" },
   { id: "experience", label: "experience", index: "03" },
