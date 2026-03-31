@@ -18,7 +18,7 @@ const NAV_ITEMS = [
   { id: "projects",   label: "projects",   index: "05" },
   { id: "contact",    label: "contact",    index: "06" },
 ];
-
+//Github
 // ─── Scroll progress bar ─────────────────────────────────────────────────────
 function ScrollProgress() {
   const [progress, setProgress] = useState(0);
