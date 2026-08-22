@@ -99,7 +99,7 @@ export default function Work() {
 
             gsap.to(card, {
               ...motion,
-              duration: animate ? 0.62 : 0,
+              duration: animate ? 0.5 : 0,
               ease: "power3.out",
               overwrite: "auto",
             });
@@ -115,8 +115,8 @@ export default function Work() {
                 opacity: 1,
                 y: 0,
                 duration: 0.4,
-                stagger: 0.05,
-                delay: 0.18,
+                stagger: 0.04,
+                delay: 0.14,
                 ease: "power3.out",
                 overwrite: "auto",
               },

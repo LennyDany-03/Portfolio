@@ -60,24 +60,58 @@ export function collectStops(): Stop[] {
     .filter((s, i, list) => i === 0 || s.y - list[i - 1].y > 8);
 }
 
-/** Convenience provider for a plain section: one curtained stop at its top. */
+/**
+ * Provider for a plain section.
+ *
+ * Emits ONE curtained stop at the top, plus an interior stop every viewport
+ * for any section taller than the screen. Without those interior stops a tall
+ * section is only ever seen from its top: Process is roughly 1.6 viewports, so
+ * step 04 sat permanently below the fold and the next gesture jumped straight
+ * over it to Contact, which read as a stretch of missing content.
+ *
+ * Interior stops are `curtain: false` — they are movement WITHIN a section,
+ * not an arrival at a new one, so wiping the screen for them would be wrong.
+ */
 export function sectionStop(
   el: HTMLElement | null,
   label?: { eyebrow: string; title: string },
 ): StopProvider {
-  const measure = () =>
+  const topOf = () =>
     el ? el.getBoundingClientRect().top + window.scrollY : 0;
 
   return () => {
     if (!el) return [];
-    return [
+
+    const top = topOf();
+    const vh = window.innerHeight;
+    // A little slack so a section a few px over a viewport does not earn a
+    // near-duplicate stop right beneath its own top.
+    const overflow = el.offsetHeight - vh;
+
+    const stops: Stop[] = [
       {
-        y: measure(),
-        measure,
+        y: top,
+        measure: topOf,
         curtain: true,
         eyebrow: label?.eyebrow,
         title: label?.title,
       },
     ];
+
+    if (overflow > vh * 0.25) {
+      const steps = Math.ceil(overflow / vh);
+      for (let i = 1; i <= steps; i++) {
+        // Clamp to the section bottom so the last interior stop shows the end
+        // of the section rather than overshooting into the next one.
+        const offset = Math.min(i * vh, overflow);
+        stops.push({
+          y: top + offset,
+          measure: () => topOf() + Math.min(i * vh, el.offsetHeight - vh),
+          curtain: false,
+        });
+      }
+    }
+
+    return stops;
   };
 }

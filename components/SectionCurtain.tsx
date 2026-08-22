@@ -2,7 +2,14 @@
 
 import { useRef } from "react";
 import { gsap, useGSAP } from "@/lib/gsap";
-import { setCurtainRunner, CURTAIN } from "@/lib/curtain";
+import {
+  setCurtainRunner,
+  CURTAIN,
+  CURTAIN_COVER,
+  CURTAIN_OUT_AT,
+  LABEL,
+  LABEL_OUT_AT,
+} from "@/lib/curtain";
 
 /**
  * Curved band transition between sections.
@@ -63,6 +70,11 @@ export default function SectionCurtain() {
             if (title.current) title.current.textContent = text?.title ?? "";
             const hasText = Boolean(text?.eyebrow || text?.title);
 
+            // Hard reset before every run. The label must never start a
+            // transition already visible — if a previous timeline was killed
+            // mid-flight its opacity tween died wherever it happened to be.
+            gsap.set(label.current, { opacity: 0, y: 26 });
+
             // Travelling down the page means the panels sweep UP across it, so
             // they enter from below and leave through the top.
             const from = dir > 0 ? 115 : -115;
@@ -74,37 +86,54 @@ export default function SectionCurtain() {
                   gsap.set(root.current, { visibility: "visible" }),
                 onComplete: () => {
                   gsap.set(root.current, { visibility: "hidden" });
+                  // Belt and braces: whatever the tweens did, the label is
+                  // gone once the bands are. This is the state that leaked and
+                  // left the title sitting over the live page.
+                  gsap.set(label.current, { opacity: 0 });
                   active = null;
                 },
               })
-              .set(layers, { yPercent: from })
-              .to(layers, {
-                yPercent: 0,
-                duration: CURTAIN.in,
-                stagger: CURTAIN.stagger,
-                ease: "power2.inOut",
-              })
+              .set(layers, { yPercent: from }, 0)
+              .to(
+                layers,
+                {
+                  yPercent: 0,
+                  duration: CURTAIN.in,
+                  stagger: CURTAIN.stagger,
+                  ease: "power2.inOut",
+                },
+                0,
+              )
               // Fires the moment the FIRST layer lands — every layer is a full
-              // opaque viewport, so one of them at 0 already hides everything.
-              // Waiting for the last would show a needless pause.
-              .call(onCovered, undefined, CURTAIN.in)
-              // The preview rises in under full cover and clears before the
-              // bands move again, so it is never seen sliding around.
+              // opaque viewport, so one at 0 already hides everything. Waiting
+              // for the last would add a pointless pause before the jump.
+              .call(onCovered, undefined, CURTAIN_COVER)
+              // Preview rises in just under full cover...
               .fromTo(
                 label.current,
                 { opacity: 0, y: 26 },
                 {
                   opacity: hasText ? 1 : 0,
                   y: 0,
-                  duration: 0.34,
+                  duration: LABEL.inFor,
                   ease: "power3.out",
                 },
-                CURTAIN.in - 0.06,
+                LABEL.inAt,
               )
+              // ...and clears before the bands move, so it is never seen
+              // sliding around with them.
               .to(
                 label.current,
-                { opacity: 0, y: -18, duration: 0.22, ease: "power2.in" },
-                CURTAIN.in + CURTAIN.hold + CURTAIN.stagger * 2,
+                {
+                  opacity: 0,
+                  y: -18,
+                  duration: LABEL.outFor,
+                  ease: "power2.in",
+                  // The beats above already guarantee no overlap; this makes
+                  // it structurally impossible to regress by re-timing them.
+                  overwrite: "auto",
+                },
+                LABEL_OUT_AT,
               )
               .to(
                 layers,
@@ -114,11 +143,10 @@ export default function SectionCurtain() {
                   stagger: CURTAIN.stagger,
                   ease: "power2.inOut",
                 },
-                // Explicit hold at full cover. Without the offset this would
-                // append straight onto the sweep-in and the bands would
-                // reverse the instant they landed, which reads as a bounce
-                // rather than a transition.
-                `+=${CURTAIN.hold}`,
+                // ABSOLUTE, never "+=". A relative offset here is measured
+                // from the timeline end, so the label tweens above would push
+                // the sweep-out past the moment ScrollSnap unlocks.
+                CURTAIN_OUT_AT,
               );
 
             return active;

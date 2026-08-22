@@ -259,6 +259,49 @@ export const PROCESS_STEPS: ProcessStep[] = [
  * h2 — except ABOUT, whose h2 is a full paragraph and is condensed from its own
  * opening line. Change them freely; nothing else reads these.
  */
+
+export type Channel = {
+  label: string;
+  href: string;
+  handle: string;
+  /** What this channel is actually the right place for. */
+  best: string;
+};
+
+/**
+ * 05 / REACH ME. Sits between Process and Contact.
+ *
+ * Every link here already exists in SOCIAL_LINKS — this section adds the
+ * CONTEXT that a bare row of footer links cannot: which channel is the right
+ * one for what. The "best for" lines are the only new copy; rewrite freely.
+ */
+export const REACH_CHANNELS: Channel[] = [
+  {
+    label: "GitHub",
+    href: "https://github.com/LennyDany-03",
+    handle: "@LennyDany-03",
+    best: "Source, tagged releases, commit history. The work itself.",
+  },
+  {
+    label: "LinkedIn",
+    href: "https://linkedin.com/in/lenny-dany-derek-d",
+    handle: "/lenny-dany-derek-d",
+    best: "Internships and roles. Reach me here for anything formal.",
+  },
+  {
+    label: "Ascendry",
+    href: "https://lenny3.vercel.app",
+    handle: "Udyam-registered",
+    best: "Freelance builds — web, mobile and desktop, scoped and shipped.",
+  },
+  {
+    label: "Instagram",
+    href: "https://instagram.com/lennydany3",
+    handle: "@lennydany3",
+    best: "Build-in-public posts and clips. The unedited version.",
+  },
+];
+
 export const NEXT_LABELS = {
   hero: { eyebrow: "LDD", title: "Lenny Dany Derek D." },
   about: { eyebrow: "01 / ABOUT", title: "Built end-to-end, alone." },
@@ -271,8 +314,9 @@ export const NEXT_LABELS = {
     eyebrow: "04 / PROCESS",
     title: "The same four moves, every time.",
   },
+  reach: { eyebrow: "05 / REACH ME", title: "Open to work that ships." },
   contact: {
-    eyebrow: "05 / CONTACT",
+    eyebrow: "06 / CONTACT",
     title: "Got something that needs shipping?",
   },
 } as const;
@@ -281,6 +325,7 @@ export const NAV_LINKS = [
   { label: "Work", href: "#work" },
   { label: "Stack", href: "#stack" },
   { label: "Process", href: "#process" },
+  { label: "Reach", href: "#reach" },
   { label: "Contact", href: "#contact" },
 ];
 

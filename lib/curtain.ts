@@ -42,24 +42,48 @@ export function runCurtain(
   return true;
 }
 
-/** Beat layout, shared so ScrollSnap can time its lock to the same clock. */
+/**
+ * Beat layout. Every number is an ABSOLUTE offset on the curtain timeline —
+ * no relative ("+=") positions anywhere, because a relative offset is measured
+ * from the timeline END, so adding any tween silently pushes later beats out
+ * of sync with CURTAIN_TOTAL.
+ */
 export const CURTAIN = {
-  /** Sweep in — screen is fully covered at the end of this. */
-  in: 0.42,
-  /** Gap between layers. */
-  stagger: 0.05,
-  /** Hold at full cover before sweeping out. */
-  hold: 0.1,
+  /** Sweep in. */
+  in: 0.38,
+  /** Gap between the three layers. */
+  stagger: 0.045,
+  /**
+   * Hold at full cover. This is the ONLY window the preview title exists in,
+   * so it has to fit a fade in, a readable beat, and a fade out. At the old
+   * 0.1s it did not: the two opacity tweens overlapped, the fade-in outlived
+   * the fade-out and drove the label back to full opacity, and it hung over
+   * the live page while the bands swept away.
+   */
+  hold: 0.55,
   /** Sweep out. */
-  out: 0.52,
+  out: 0.45,
 } as const;
 
+/** The instant the screen is fully hidden (first layer landed). */
+export const CURTAIN_COVER = CURTAIN.in;
+
+/** When the sweep-out begins: last layer in, plus the hold. */
+export const CURTAIN_OUT_AT = CURTAIN.in + CURTAIN.stagger * 2 + CURTAIN.hold;
+
+/** Total wall time, last layer fully gone. */
+export const CURTAIN_TOTAL = CURTAIN_OUT_AT + CURTAIN.out + CURTAIN.stagger * 2;
+
 /**
- * Total wall time of one transition.
- *
- * Both sweeps carry the stagger (three layers, so the last one finishes two
- * gaps after the first), hence stagger * 4 rather than * 2 — undercounting
- * here would release the input lock while bands were still on screen.
+ * Preview label beats, derived so they CANNOT overlap each other and both sit
+ * strictly inside the covered window. Kept here rather than in the component
+ * so the no-overlap guarantee lives next to the numbers it depends on.
  */
-export const CURTAIN_TOTAL =
-  CURTAIN.in + CURTAIN.hold + CURTAIN.out + CURTAIN.stagger * 4;
+export const LABEL = {
+  inAt: CURTAIN_COVER - 0.04,
+  inFor: 0.3,
+  outFor: 0.2,
+} as const;
+
+/** Fade-out starts only once the fade-in has fully finished. */
+export const LABEL_OUT_AT = CURTAIN_OUT_AT - LABEL.outFor;

@@ -15,7 +15,9 @@ export default function Contact() {
 
   useGSAP(
     () => {
-      const unregister = registerStops(sectionStop(root.current, NEXT_LABELS.contact));
+      const unregister = registerStops(
+        sectionStop(root.current, NEXT_LABELS.contact),
+      );
       const mm = gsap.matchMedia();
 
       mm.add(MEDIA.motionOK, () => {
@@ -166,7 +168,7 @@ export default function Contact() {
       <div className="mx-auto grid max-w-[1240px] gap-16 md:gap-[90px]">
         <div className="grid justify-items-start gap-8 md:gap-10">
           <p className="text-accent font-mono text-[11px] tracking-[0.22em]">
-            05 / CONTACT
+            06 / CONTACT
           </p>
 
           <h2

@@ -6,8 +6,13 @@ import { collectStops, type Stop } from "@/lib/snap";
 import { scrollToY, freezeScroll, thawScroll } from "@/lib/lenis";
 import { runCurtain, CURTAIN_TOTAL } from "@/lib/curtain";
 
-/** Step duration for stops that do NOT play the curtain (Work card changes). */
-const PLAIN_STEP = 0.55;
+/**
+ * Step duration for stops that do NOT play the curtain — Work card changes and
+ * movement inside a tall section. Deliberately shorter than the curtain: there
+ * is nothing covering the screen here, so the lock is felt directly and a long
+ * one reads as the page ignoring you.
+ */
+const PLAIN_STEP = 0.42;
 
 /**
  * One gesture, one beat — on a page that cannot be scrolled by hand.
@@ -158,7 +163,7 @@ export default function ScrollSnap() {
           if (!usedCurtain) scrollToY(target.y, PLAIN_STEP, true);
 
           gsap.delayedCall(
-            usedCurtain ? CURTAIN_TOTAL : PLAIN_STEP + 0.05,
+            usedCurtain ? CURTAIN_TOTAL : PLAIN_STEP + 0.02,
             () => {
               animating = false;
             },
