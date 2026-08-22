@@ -86,7 +86,7 @@ export default function Reach() {
     <section
       ref={root}
       id="reach"
-      className="border-hair relative border-t px-5 py-24 md:px-10 md:py-[150px] lg:px-[60px]"
+      className="border-hair relative border-t px-5 py-16 md:px-10 md:py-[150px] lg:px-[60px]"
       aria-label="Reach me"
     >
       <div className="mx-auto grid max-w-[1240px] gap-12 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-20">
@@ -122,7 +122,7 @@ export default function Reach() {
                   target="_blank"
                   rel="noreferrer"
                   data-cursor-label="Open"
-                  className="border-hair-2 hover:border-hair-3 group grid gap-3 border-t py-6 transition-colors md:grid-cols-[minmax(0,200px)_minmax(0,1fr)_auto] md:items-baseline md:gap-8 md:py-7"
+                  className="border-hair-2 hover:border-hair-3 group grid grid-cols-[1fr_auto] items-baseline gap-x-4 gap-y-1.5 border-t py-5 transition-colors md:grid-cols-[minmax(0,200px)_minmax(0,1fr)_auto] md:gap-8 md:py-7"
                 >
                   <span className="flex items-baseline gap-3">
                     <span className="text-hi font-display text-[22px] leading-none font-semibold tracking-[-0.02em] md:text-[26px]">
@@ -133,15 +133,16 @@ export default function Reach() {
                     </span>
                   </span>
 
-                  <span className="text-muted-2 text-[15px] leading-[1.6] md:text-base">
-                    {channel.best}
-                  </span>
-
                   <span
                     aria-hidden
-                    className="text-dim group-hover:text-accent font-mono text-[11px] tracking-[0.14em] transition-colors"
+
+                    className="text-dim group-hover:text-accent font-mono text-[11px] tracking-[0.14em] transition-colors md:col-start-3 md:row-start-1"
                   >
                     ↗
+                  </span>
+
+                  <span className="text-muted-2 col-span-2 text-[14px] leading-[1.55] md:col-span-1 md:col-start-2 md:row-start-1 md:text-base">
+                    {channel.best}
                   </span>
                 </a>
               </li>
@@ -153,7 +154,7 @@ export default function Reach() {
               <a
                 href={"mailto:" + EMAIL}
                 data-cursor-label="Send"
-                className="border-hair-2 hover:border-hair-3 group grid gap-3 border-t border-b py-6 transition-colors md:grid-cols-[minmax(0,200px)_minmax(0,1fr)_auto] md:items-baseline md:gap-8 md:py-7"
+                className="border-hair-2 hover:border-hair-3 group grid grid-cols-[1fr_auto] items-baseline gap-x-4 gap-y-1.5 border-t border-b py-5 transition-colors md:grid-cols-[minmax(0,200px)_minmax(0,1fr)_auto] md:gap-8 md:py-7"
               >
                 <span className="flex items-baseline gap-3">
                   <span className="text-hi font-display text-[22px] leading-none font-semibold tracking-[-0.02em] md:text-[26px]">
@@ -164,15 +165,15 @@ export default function Reach() {
                   </span>
                 </span>
 
-                <span className="text-muted-2 text-[15px] leading-[1.6] md:text-base">
-                  Everything else. Scope, timelines, or just the question.
-                </span>
-
                 <span
                   aria-hidden
-                  className="text-dim group-hover:text-accent font-mono text-[11px] tracking-[0.14em] transition-colors"
+                  className="text-dim group-hover:text-accent font-mono text-[11px] tracking-[0.14em] transition-colors md:col-start-3 md:row-start-1"
                 >
                   →
+                </span>
+
+                <span className="text-muted-2 col-span-2 text-[14px] leading-[1.55] md:col-span-1 md:col-start-2 md:row-start-1 md:text-base">
+                  Everything else. Scope, timelines, or just the question.
                 </span>
               </a>
             </li>

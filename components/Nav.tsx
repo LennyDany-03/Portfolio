@@ -73,7 +73,10 @@ export default function Nav() {
 
       <nav
         aria-label="Primary"
-        className="hidden gap-8 font-mono text-[11px] tracking-[0.18em] uppercase md:flex"
+        // Visible on phones now. With scroll locked into discrete slides, a
+        // mobile visitor with no nav would have to swipe through every stop to
+        // reach Contact. The location stamp yields the space instead.
+        className="flex gap-3 font-mono text-[9px] tracking-[0.12em] uppercase sm:gap-5 sm:text-[10px] sm:tracking-[0.18em] md:gap-8 md:text-[11px]"
       >
         {NAV_LINKS.map((link) => (
           <a
@@ -87,7 +90,8 @@ export default function Nav() {
         ))}
       </nav>
 
-      <span className="text-dim font-mono text-[10px] tracking-[0.14em] md:text-[11px]">
+      {/* Hidden on phones so the nav links have room. */}
+      <span className="text-dim hidden font-mono text-[10px] tracking-[0.14em] sm:block md:text-[11px]">
         CHENNAI, IN
       </span>
 

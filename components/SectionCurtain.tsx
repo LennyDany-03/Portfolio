@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import { gsap, useGSAP } from "@/lib/gsap";
+import { gsap, useGSAP, MEDIA } from "@/lib/gsap";
 import {
   setCurtainRunner,
   CURTAIN,
@@ -48,7 +48,10 @@ export default function SectionCurtain() {
       // Same gate as ScrollSnap. If this does not match, runCurtain() returns
       // false and the caller animates the scroll normally instead.
       mm.add(
-        "(min-width: 768px) and (prefers-reduced-motion: no-preference)",
+        // Matches ScrollSnap exactly. If these two gates ever disagree,
+        // runCurtain() returns false and the page silently animates its scroll
+        // instead of wiping — which looks like the transition vanished.
+        MEDIA.motionOK,
         () => {
           const layers = gsap.utils.toArray<HTMLElement>(
             "[data-curtain-layer]",

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import { gsap, useGSAP, Observer, ScrollTrigger } from "@/lib/gsap";
+import { gsap, useGSAP, Observer, ScrollTrigger, MEDIA } from "@/lib/gsap";
 import { collectStops, type Stop } from "@/lib/snap";
 import { scrollToY, freezeScroll, thawScroll } from "@/lib/lenis";
 import { runCurtain, CURTAIN_TOTAL } from "@/lib/curtain";
@@ -42,7 +42,12 @@ export default function ScrollSnap() {
     const mm = gsap.matchMedia();
 
     mm.add(
-      "(min-width: 768px) and (prefers-reduced-motion: no-preference)",
+      // All widths now, not just desktop. Mobile is the one place this pattern
+      // usually breaks — long text does not fit a phone viewport — but that is
+      // already solved: sectionStop() emits one interior stop per viewport, so
+      // a tall section simply becomes more slides on a small screen instead of
+      // hiding its bottom half.
+      MEDIA.motionOK,
       () => {
         let animating = false;
         let lockedAt = 0;
@@ -127,8 +132,17 @@ export default function ScrollSnap() {
           }
 
           const from = nearest();
-          const next = from + delta;
-          if (next < 0 || next >= stops.length) return;
+          stepTo(from + delta);
+        };
+
+        /** Move to a stop by index. Shared by gestures and by anchor clicks. */
+        const stepTo = (next: number) => {
+          // go() clears this via its watchdog first; anchor clicks come in
+          // without that check, so the guard belongs here too.
+          if (animating) return;
+          const from = nearest();
+          if (next === from || next < 0 || next >= stops.length) return;
+          const delta = next > from ? 1 : -1;
 
           const target = stops[next];
           // The curtain marks crossing SECTIONS, not reaching a given stop.
@@ -182,6 +196,46 @@ export default function ScrollSnap() {
           );
         };
 
+        /* Nav links have to be intercepted.
+           Lenis handles #hash links itself via its `anchors` option, but that
+           path calls its own scrollTo WITHOUT `force` — and the page is frozen,
+           so Lenis ignores it and the link silently does nothing. Routing
+           anchors through stepTo() also means clicking WORK gets the same
+           curtain as swiping to it, rather than a second kind of navigation. */
+        const onAnchorClick = (event: MouseEvent) => {
+          if (!armed.current) return;
+          if (event.defaultPrevented || event.metaKey || event.ctrlKey) return;
+
+          const link = (event.target as Element | null)?.closest?.(
+            'a[href^="#"]',
+          );
+          if (!link) return;
+
+          const id = link.getAttribute("href")?.slice(1);
+          const el = id ? document.getElementById(id) : null;
+          if (!el) return;
+
+          event.preventDefault();
+          refresh();
+          if (!stops.length) return;
+
+          // Land on the registered stop nearest the target, so anchors can
+          // never drop the page somewhere the gesture system cannot resume from.
+          const y = el.getBoundingClientRect().top + window.scrollY;
+          let best = 0;
+          let bestDist = Infinity;
+          stops.forEach((stop, i) => {
+            const d = Math.abs(stop.y - y);
+            if (d < bestDist) {
+              bestDist = d;
+              best = i;
+            }
+          });
+          stepTo(best);
+        };
+
+        document.addEventListener("click", onAnchorClick);
+
         const observer = Observer.create({
           target: window,
           type: "wheel,touch",
@@ -190,6 +244,10 @@ export default function ScrollSnap() {
           allowClicks: true,
           // High tolerance so one trackpad flick is one step, not five.
           tolerance: 24,
+          // Touch only: ignore anything under 12px so a tap, or the tiny drag
+          // that comes with one, never counts as a swipe. Without it a stray
+          // finger movement while reading would flip the section.
+          dragMinimum: 12,
           wheelSpeed: -1,
           onUp: () => go(1),
           onDown: () => go(-1),
@@ -201,6 +259,7 @@ export default function ScrollSnap() {
         ScrollTrigger.addEventListener("refresh", refresh);
 
         return () => {
+          document.removeEventListener("click", onAnchorClick);
           ScrollTrigger.removeEventListener("refresh", refresh);
           observer.kill();
           thawScroll();

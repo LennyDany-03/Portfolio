@@ -61,7 +61,7 @@ export default function Work() {
       const total = PROJECTS.length;
 
       /* ------------------------------------------------------------------
-         Desktop: pinned card deck.
+         Pinned card deck — every width.
 
          Transport is a pinned ScrollTrigger with snap, NOT an Observer that
          swallows the wheel. Snapping to 1/(total-1) means one ordinary scroll
@@ -71,7 +71,7 @@ export default function Work() {
          responding. Observer is used for what it is uniquely good at below:
          reading a drag, and reporting gesture direction.
       ------------------------------------------------------------------ */
-      mm.add(MEDIA.desktopMotion, () => {
+      mm.add(MEDIA.motionOK, () => {
         const trackEl = track.current;
         const railEl = rail.current;
         const counterEl = counter.current;
@@ -212,24 +212,12 @@ export default function Work() {
         };
       });
 
-      /* ------------------------------------------------------------------
-         Below 768px: no pin, no deck. The track is a native scroll-snap rail
-         (see globals.css) and cards simply rise on entry.
+      /* The old sub-768px branch is gone. It fell back to a native horizontal
+         scroll-snap rail, which cannot work now that ScrollSnap captures touch
+         to step between sections — the rail would never receive the swipe. The
+         deck above runs at every width instead, so one vertical gesture always
+         means one step. Reduced motion still gets the rail, from CSS only.
       ------------------------------------------------------------------ */
-      mm.add(MEDIA.mobileMotion, () => {
-        gsap.from("[data-card]", {
-          opacity: 0,
-          y: 30,
-          duration: 0.7,
-          stagger: 0.06,
-          ease: "power3.out",
-          scrollTrigger: {
-            trigger: root.current,
-            start: "top 75%",
-            once: true,
-          },
-        });
-      });
 
       mm.add(MEDIA.reduced, () => {
         gsap.from("[data-card]", {
@@ -258,7 +246,7 @@ export default function Work() {
         data-work-stage
         className="flex flex-col justify-center gap-10 py-24 md:gap-0 md:py-0"
       >
-        <header className="mx-auto flex w-full max-w-[1240px] flex-col gap-4 px-5 md:px-10 md:pt-[118px] md:pb-6 lg:px-[60px]">
+        <header className="mx-auto flex w-full max-w-[1240px] flex-col gap-3 px-5 pt-24 pb-4 md:gap-4 md:px-10 md:pt-[118px] md:pb-6 lg:px-[60px]">
           <p className="text-accent font-mono text-[11px] tracking-[0.22em]">
             02 / SELECTED WORK
           </p>
@@ -278,7 +266,10 @@ export default function Work() {
             <article
               key={project.title}
               data-card
-              className="border-hair-2 bg-panel grid min-h-[420px] w-[85vw] shrink-0 grid-rows-[auto_1fr_auto] gap-6 border p-7 sm:w-[70vw] md:min-h-0 md:w-[520px] md:gap-[26px] md:p-[38px]"
+              // Width/height are taken over by the deck rules in globals.css;
+              // what matters here is that the CONTENT fits the smaller box a
+              // phone gets, so the type and padding step down.
+              className="border-hair-2 bg-panel grid min-h-[420px] w-[85vw] shrink-0 grid-rows-[auto_1fr_auto] gap-4 overflow-hidden border p-5 sm:w-[70vw] sm:p-6 md:min-h-0 md:w-[520px] md:gap-[26px] md:p-[38px]"
             >
               <div className="text-dim flex items-center justify-between font-mono text-[10px] tracking-[0.18em]">
                 <span className="text-accent">{project.index}</span>
@@ -286,13 +277,13 @@ export default function Work() {
               </div>
 
               <div className="grid content-start gap-4">
-                <h3 className="text-hi font-display m-0 text-[36px] font-semibold tracking-[-0.03em] md:text-[44px]">
+                <h3 className="text-hi font-display m-0 text-[26px] font-semibold tracking-[-0.03em] sm:text-[32px] md:text-[44px]">
                   {project.title}
                 </h3>
-                <p className="text-muted-2 m-0 text-[16px] leading-[1.6] md:text-[17px]">
+                <p className="text-muted-2 m-0 text-[14px] leading-[1.55] sm:text-[15px] md:text-[17px]">
                   {project.summary}
                 </p>
-                <p className="text-dim m-0 font-mono text-[11px] leading-[1.8]">
+                <p className="text-dim m-0 font-mono text-[10px] leading-[1.7] md:text-[11px]">
                   {project.detail}
                 </p>
               </div>
@@ -336,7 +327,7 @@ export default function Work() {
           ))}
         </div>
 
-        <div className="mx-auto flex w-full max-w-[1240px] items-center gap-5 px-5 md:px-10 md:pb-12 lg:px-[60px]">
+        <div className="mx-auto flex w-full max-w-[1240px] items-center gap-4 px-5 pb-8 md:gap-5 md:px-10 md:pb-12 lg:px-[60px]">
           <span
             ref={counter}
             className="text-dim font-mono text-[11px] tracking-[0.18em] tabular-nums"

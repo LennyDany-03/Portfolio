@@ -54,11 +54,17 @@ export function unlockScroll() {
 export function freezeScroll() {
   frozen = true;
   instance?.stop();
+  // Touch needs CSS backing, not just preventDefault: once a browser has
+  // committed to a pan gesture it can ignore preventDefault entirely, and the
+  // page scrolls anyway. pinch-zoom (rather than none) blocks the pan while
+  // still allowing zoom, which is an accessibility requirement.
+  document.documentElement.dataset.scrollLocked = "true";
 }
 
 export function thawScroll() {
   frozen = false;
   instance?.start();
+  delete document.documentElement.dataset.scrollLocked;
 }
 
 /**

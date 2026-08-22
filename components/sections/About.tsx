@@ -15,7 +15,9 @@ export default function About() {
 
   useGSAP(
     () => {
-      const unregister = registerStops(sectionStop(root.current, "about", NEXT_LABELS.about));
+      const unregister = registerStops(
+        sectionStop(root.current, "about", NEXT_LABELS.about),
+      );
       const mm = gsap.matchMedia();
 
       mm.add(MEDIA.motionOK, () => {
@@ -144,7 +146,7 @@ export default function About() {
   return (
     <section
       ref={root}
-      className="border-hair relative border-t px-5 py-24 md:px-10 md:py-[180px] lg:px-[60px]"
+      className="border-hair relative border-t px-5 py-16 md:px-10 md:py-[180px] lg:px-[60px]"
     >
       <div className="mx-auto grid max-w-[1240px] gap-12 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-20">
         <p className="text-accent font-mono text-[11px] tracking-[0.22em]">

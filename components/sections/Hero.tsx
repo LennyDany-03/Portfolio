@@ -20,7 +20,9 @@ export default function Hero() {
 
   useGSAP(
     () => {
-      const unregister = registerStops(sectionStop(root.current, "hero", NEXT_LABELS.hero));
+      const unregister = registerStops(
+        sectionStop(root.current, "hero", NEXT_LABELS.hero),
+      );
       const mm = gsap.matchMedia();
 
       /* ---------------- Full motion ---------------- */
@@ -182,7 +184,7 @@ export default function Hero() {
     <section
       ref={root}
       id="top"
-      className="relative grid min-h-svh content-center overflow-hidden px-5 pt-32 pb-20 md:px-10 md:pt-[150px] md:pb-24 lg:px-[60px]"
+      className="relative grid min-h-svh content-start overflow-hidden px-5 pt-28 pb-16 md:content-center md:px-10 md:pt-[150px] md:pb-24 lg:px-[60px]"
     >
       <div
         ref={grid}
@@ -212,7 +214,7 @@ export default function Hero() {
       <div
         ref={portrait}
         aria-hidden
-        className="pointer-events-none absolute right-[-4%] bottom-0 hidden h-[76svh] w-[46vw] max-w-[640px] will-change-transform lg:block"
+        className="portrait-mobile pointer-events-none absolute right-[-6%] bottom-0 block h-[44svh] w-[80vw] will-change-transform sm:h-[52svh] sm:w-[60vw] lg:right-[-4%] lg:h-[76svh] lg:w-[46vw] lg:max-w-[640px]"
       >
         {/* The fade mask wraps ONLY the photo. If the outline shared it, the
             left shoulder — the point the contour starts from — would be masked
@@ -233,7 +235,7 @@ export default function Hero() {
         <PortraitOutline />
       </div>
 
-      <div className="relative mx-auto grid w-full max-w-[1240px] gap-8 md:gap-[42px]">
+      <div className="relative mx-auto grid w-full max-w-[1240px] gap-6 md:gap-[42px]">
         <p
           data-hero-eyebrow
           className="text-accent flex items-center gap-4 font-mono text-[10px] tracking-[0.24em] uppercase md:text-[11px]"
@@ -260,7 +262,7 @@ export default function Hero() {
             [1fr_420px] split existed only to hold it, and keeping it would
             reserve 420px of dead space beside the tagline. */}
         <div className="grid items-end gap-10">
-          <div className="grid gap-7 md:gap-[30px]">
+          <div className="grid gap-6 md:gap-[30px]">
             <p
               ref={tagline}
               data-hero-tagline
@@ -271,13 +273,13 @@ export default function Hero() {
 
             <div
               data-hero-actions
-              className="flex flex-col items-start gap-6 sm:flex-row sm:items-center sm:gap-[26px]"
+              className="flex flex-col-reverse items-start gap-5 sm:flex-row sm:items-center sm:gap-[26px]"
             >
               <a
                 ref={cta}
                 href="#work"
                 data-cursor-label="View"
-                className="bg-accent text-ink inline-flex w-full items-center justify-center gap-3.5 rounded-[2px] px-8 py-5 font-mono text-xs font-bold tracking-[0.2em] uppercase transition-shadow duration-300 will-change-transform hover:shadow-[0_0_44px_rgb(255_70_85_/_0.45)] sm:w-auto"
+                className="bg-accent text-ink inline-flex w-full items-center justify-center gap-3.5 rounded-[2px] px-8 py-4 font-mono text-xs font-bold tracking-[0.2em] uppercase transition-shadow duration-300 will-change-transform hover:shadow-[0_0_44px_rgb(255_70_85_/_0.45)] sm:w-auto sm:py-5"
               >
                 View Work <span aria-hidden>→</span>
               </a>
@@ -294,7 +296,7 @@ export default function Hero() {
       <div
         data-hero-scroll
         aria-hidden
-        className="text-dim-2 absolute right-5 bottom-11 hidden items-center gap-3 font-mono text-[10px] tracking-[0.2em] md:right-10 md:flex lg:right-[60px]"
+        className="text-dim-2 absolute bottom-6 left-5 flex items-center gap-3 font-mono text-[10px] tracking-[0.2em] md:right-10 md:bottom-11 md:left-auto lg:right-[60px]"
       >
         SCROLL
         <span className="block h-10 w-px bg-gradient-to-b from-[var(--color-accent)] to-transparent" />

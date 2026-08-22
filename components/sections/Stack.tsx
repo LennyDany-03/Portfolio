@@ -34,7 +34,7 @@ function MarqueeRow({
   const track = (tone: string) => (
     <div
       data-marquee-track
-      className={`font-display flex w-max gap-10 text-[32px] tracking-[-0.03em] whitespace-nowrap will-change-transform md:gap-[60px] md:text-[46px] ${tone}`}
+      className={`font-display flex w-max gap-6 text-[22px] tracking-[-0.03em] whitespace-nowrap will-change-transform sm:gap-10 sm:text-[30px] md:gap-[60px] md:text-[46px] ${tone}`}
     >
       {doubled.map((word, i) => (
         <span key={word + i}>{word}</span>
@@ -66,7 +66,9 @@ export default function Stack() {
 
   useGSAP(
     () => {
-      const unregister = registerStops(sectionStop(root.current, "stack", NEXT_LABELS.stack));
+      const unregister = registerStops(
+        sectionStop(root.current, "stack", NEXT_LABELS.stack),
+      );
       const mm = gsap.matchMedia();
 
       mm.add(MEDIA.motionOK, () => {
@@ -212,9 +214,9 @@ export default function Stack() {
     <section
       ref={root}
       id="stack"
-      className="border-hair relative overflow-hidden border-t py-24 md:py-[180px]"
+      className="border-hair relative overflow-hidden border-t py-16 md:py-[180px]"
     >
-      <div className="mx-auto mb-16 grid max-w-[1240px] gap-10 px-5 md:mb-20 md:px-10 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-20 lg:px-[60px]">
+      <div className="mx-auto mb-8 grid max-w-[1240px] gap-4 px-5 md:mb-20 md:gap-10 md:px-10 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-20 lg:px-[60px]">
         <p className="text-accent font-mono text-[11px] tracking-[0.22em]">
           03 / STACK
         </p>
@@ -229,7 +231,7 @@ export default function Stack() {
       </div>
 
       {/* Second row is hidden on mobile per the design spec. */}
-      <div className="mb-16 grid gap-4 md:mb-[90px]">
+      <div className="mb-8 grid gap-2 md:mb-[90px] md:gap-4">
         <MarqueeRow words={MARQUEE_ROW_A} outerRef={rowA} />
         <div className="hidden md:block">
           <MarqueeRow words={MARQUEE_ROW_B} outerRef={rowB} />
@@ -241,7 +243,7 @@ export default function Stack() {
           <div
             key={group.label}
             data-stack-cell
-            className="bg-ink grid gap-3.5 px-6 py-8 md:px-[30px] md:py-[34px]"
+            className="bg-ink grid gap-2 px-5 py-5 md:gap-3.5 md:px-[30px] md:py-[34px]"
           >
             <dt className="text-accent font-mono text-[10px] tracking-[0.2em]">
               {group.label}

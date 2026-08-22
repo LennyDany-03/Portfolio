@@ -35,10 +35,14 @@ export const MEDIA = {
   motionOK: "(prefers-reduced-motion: no-preference)",
   /** User asked for less motion — reveals collapse to a 200ms opacity fade. */
   reduced: "(prefers-reduced-motion: reduce)",
-  /** Pin/scrub work is desktop-only; mobile Safari handles it badly. */
+  /**
+   * Genuinely pointer-only work: hover parallax, magnetic pull. NOT a general
+   * "desktop features" gate any more — the snap, the curtain and the Work deck
+   * all run at every width now.
+   */
   desktopMotion:
     "(min-width: 768px) and (prefers-reduced-motion: no-preference)",
-  /** Below the pin breakpoint, but motion still allowed. */
+  /** The touch-side counterpart to desktopMotion. */
   mobileMotion:
     "(max-width: 767px) and (prefers-reduced-motion: no-preference)",
 } as const;

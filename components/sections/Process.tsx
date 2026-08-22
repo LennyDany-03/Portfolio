@@ -20,7 +20,9 @@ export default function Process() {
 
   useGSAP(
     () => {
-      const unregister = registerStops(sectionStop(root.current, "process", NEXT_LABELS.process));
+      const unregister = registerStops(
+        sectionStop(root.current, "process", NEXT_LABELS.process),
+      );
       const mm = gsap.matchMedia();
 
       mm.add(MEDIA.motionOK, () => {
@@ -96,7 +98,7 @@ export default function Process() {
     <section
       ref={root}
       id="process"
-      className="border-hair relative border-t px-5 py-24 md:px-10 md:py-[170px] lg:px-[60px]"
+      className="border-hair relative border-t px-5 py-16 md:px-10 md:py-[170px] lg:px-[60px]"
       aria-label="Process"
     >
       <div className="mx-auto grid max-w-[1240px] gap-12 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-20">
