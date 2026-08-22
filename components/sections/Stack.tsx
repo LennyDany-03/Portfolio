@@ -66,7 +66,7 @@ export default function Stack() {
 
   useGSAP(
     () => {
-      const unregister = registerStops(sectionStop(root.current, NEXT_LABELS.stack));
+      const unregister = registerStops(sectionStop(root.current, "stack", NEXT_LABELS.stack));
       const mm = gsap.matchMedia();
 
       mm.add(MEDIA.motionOK, () => {

@@ -5,12 +5,10 @@
  * <ScrollSnap /> steps forward or back.
  *
  * A registry rather than a static list of sections, because not every stop is
- * a section top and not every stop deserves the same treatment. The Work deck
- * contributes one stop per CARD from inside its own pinned ScrollTrigger, so a
- * gesture there advances the deck instead of skipping the section — and those
- * card steps are flagged `curtain: false`, since the deck already has its own
- * 3D transition and wrapping it in a full-screen wipe would hide the very
- * thing the user is looking at.
+ * a section top. The Work deck contributes one stop per CARD from inside its
+ * own pinned ScrollTrigger, so a gesture there advances the deck instead of
+ * skipping the section, and a tall section contributes one stop per viewport
+ * so none of it sits permanently below the fold.
  */
 export type Stop = {
   /** Position at collect() time. Used for ordering and for `nearest()`. */
@@ -25,8 +23,16 @@ export type Stop = {
    * and corrects, so landings are exact whatever the pins did.
    */
   measure: () => number;
-  /** Play the full-screen curtain when landing here? */
-  curtain: boolean;
+  /**
+   * Which section this stop belongs to.
+   *
+   * The curtain plays when a step CROSSES sections — never because of any
+   * particular target. A per-stop `curtain` boolean could not express that:
+   * Crest is both the Work section's entry AND card 01 of the deck, so
+   * flagging it meant scrolling up from Bloom fired a full-screen wipe just to
+   * move back one card.
+   */
+  section: string;
   /** Shown on the curtain while covered, so the wipe previews what is next. */
   eyebrow?: string;
   title?: string;
@@ -63,17 +69,17 @@ export function collectStops(): Stop[] {
 /**
  * Provider for a plain section.
  *
- * Emits ONE curtained stop at the top, plus an interior stop every viewport
- * for any section taller than the screen. Without those interior stops a tall
- * section is only ever seen from its top: Process is roughly 1.6 viewports, so
- * step 04 sat permanently below the fold and the next gesture jumped straight
- * over it to Contact, which read as a stretch of missing content.
+ * Emits one stop at the top, plus an interior stop every viewport for any
+ * section taller than the screen. Without those, a tall section is only ever
+ * seen from its top: Process is roughly 1.6 viewports, so step 04 sat
+ * permanently below the fold and the next gesture jumped straight over it.
  *
- * Interior stops are `curtain: false` — they are movement WITHIN a section,
- * not an arrival at a new one, so wiping the screen for them would be wrong.
+ * Every stop carries the SAME section id, so moving within a section never
+ * wipes the screen — only crossing into a different one does.
  */
 export function sectionStop(
   el: HTMLElement | null,
+  section: string,
   label?: { eyebrow: string; title: string },
 ): StopProvider {
   const topOf = () =>
@@ -88,26 +94,23 @@ export function sectionStop(
     // near-duplicate stop right beneath its own top.
     const overflow = el.offsetHeight - vh;
 
-    const stops: Stop[] = [
-      {
-        y: top,
-        measure: topOf,
-        curtain: true,
-        eyebrow: label?.eyebrow,
-        title: label?.title,
-      },
-    ];
+    const base = {
+      section,
+      eyebrow: label?.eyebrow,
+      title: label?.title,
+    };
+
+    const stops: Stop[] = [{ y: top, measure: topOf, ...base }];
 
     if (overflow > vh * 0.25) {
       const steps = Math.ceil(overflow / vh);
       for (let i = 1; i <= steps; i++) {
         // Clamp to the section bottom so the last interior stop shows the end
         // of the section rather than overshooting into the next one.
-        const offset = Math.min(i * vh, overflow);
         stops.push({
-          y: top + offset,
+          y: top + Math.min(i * vh, overflow),
           measure: () => topOf() + Math.min(i * vh, el.offsetHeight - vh),
-          curtain: false,
+          ...base,
         });
       }
     }

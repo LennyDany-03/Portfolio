@@ -64,7 +64,13 @@ export default function ScrollSnap() {
                 0,
                 document.documentElement.scrollHeight - window.innerHeight,
               );
-            stops.push({ y: maxY, measure: bottom, curtain: true });
+            // Shares the last real stop section so reaching the footer is not
+            // treated as arriving somewhere new.
+            stops.push({
+              y: maxY,
+              measure: bottom,
+              section: stops[stops.length - 1]?.section ?? "end",
+            });
           }
         };
 
@@ -120,10 +126,16 @@ export default function ScrollSnap() {
             return;
           }
 
-          const next = nearest() + delta;
+          const from = nearest();
+          const next = from + delta;
           if (next < 0 || next >= stops.length) return;
 
           const target = stops[next];
+          // The curtain marks crossing SECTIONS, not reaching a given stop.
+          // Within Work that means card-to-card stays uncovered in both
+          // directions — including scrolling back up to card 01, which used to
+          // fire a full wipe because it doubled as the section entry.
+          const crossing = stops[from].section !== target.section;
           animating = true;
           lockedAt = performance.now();
 
@@ -152,7 +164,7 @@ export default function ScrollSnap() {
           };
 
           const usedCurtain =
-            target.curtain &&
+            crossing &&
             runCurtain(delta > 0 ? 1 : -1, covered, {
               eyebrow: target.eyebrow,
               title: target.title,

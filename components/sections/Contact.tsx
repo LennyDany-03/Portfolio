@@ -16,7 +16,7 @@ export default function Contact() {
   useGSAP(
     () => {
       const unregister = registerStops(
-        sectionStop(root.current, NEXT_LABELS.contact),
+        sectionStop(root.current, "contact", NEXT_LABELS.contact),
       );
       const mm = gsap.matchMedia();
 

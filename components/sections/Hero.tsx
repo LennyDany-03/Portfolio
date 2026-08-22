@@ -20,7 +20,7 @@ export default function Hero() {
 
   useGSAP(
     () => {
-      const unregister = registerStops(sectionStop(root.current, NEXT_LABELS.hero));
+      const unregister = registerStops(sectionStop(root.current, "hero", NEXT_LABELS.hero));
       const mm = gsap.matchMedia();
 
       /* ---------------- Full motion ---------------- */

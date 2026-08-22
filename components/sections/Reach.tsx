@@ -21,7 +21,7 @@ export default function Reach() {
   useGSAP(
     () => {
       const unregister = registerStops(
-        sectionStop(root.current, NEXT_LABELS.reach),
+        sectionStop(root.current, "reach", NEXT_LABELS.reach),
       );
       const mm = gsap.matchMedia();
 

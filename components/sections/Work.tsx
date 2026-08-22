@@ -169,11 +169,11 @@ export default function Work() {
             // Re-read from the live ScrollTrigger rather than a captured
             // number: st.start/st.end move whenever the pin is recalculated.
             measure: () => cardY(i),
-            // Only ARRIVING at the section gets the curtain. Card-to-card steps
-            // stay uncovered so the deck 3D transition is actually visible —
-            // wiping the screen between cards would hide the one thing the
-            // user is looking at.
-            curtain: i === 0,
+            // EVERY card shares the section id, so stepping between them never
+            // wipes the screen — the deck 3D transition is the transition here,
+            // and covering it would hide the one thing the user is looking at.
+            // Only entering or leaving Work crosses a section boundary.
+            section: "work",
             eyebrow: NEXT_LABELS.work.eyebrow,
             title: NEXT_LABELS.work.title,
           })),

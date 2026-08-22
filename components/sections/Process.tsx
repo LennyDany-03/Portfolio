@@ -20,7 +20,7 @@ export default function Process() {
 
   useGSAP(
     () => {
-      const unregister = registerStops(sectionStop(root.current, NEXT_LABELS.process));
+      const unregister = registerStops(sectionStop(root.current, "process", NEXT_LABELS.process));
       const mm = gsap.matchMedia();
 
       mm.add(MEDIA.motionOK, () => {

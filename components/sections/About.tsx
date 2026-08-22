@@ -15,7 +15,7 @@ export default function About() {
 
   useGSAP(
     () => {
-      const unregister = registerStops(sectionStop(root.current, NEXT_LABELS.about));
+      const unregister = registerStops(sectionStop(root.current, "about", NEXT_LABELS.about));
       const mm = gsap.matchMedia();
 
       mm.add(MEDIA.motionOK, () => {
