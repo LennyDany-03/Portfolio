@@ -7,5 +7,5 @@ export default function Grain() {
       aria-hidden
       className="grain pointer-events-none fixed inset-0 z-[900] opacity-[0.22]"
     />
-  )
+  );
 }

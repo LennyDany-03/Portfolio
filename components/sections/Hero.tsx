@@ -1,110 +1,181 @@
-'use client'
+"use client";
 
-import { useRef } from 'react'
-import { gsap, useGSAP, SplitText, MEDIA } from '@/lib/gsap'
-import { useMagnetic } from '@/hooks/useMagnetic'
+import { useRef } from "react";
+import Image from "next/image";
+import { gsap, useGSAP, SplitText, MEDIA, fromLines } from "@/lib/gsap";
+import { registerStops, sectionStop } from "@/lib/snap";
+import { gateIntro } from "@/lib/intro";
+import PortraitOutline from "@/components/PortraitOutline";
+import { useMagnetic } from "@/hooks/useMagnetic";
 
 export default function Hero() {
-  const root = useRef<HTMLElement>(null)
-  const heading = useRef<HTMLHeadingElement>(null)
-  const grid = useRef<HTMLDivElement>(null)
-  const glow = useRef<HTMLDivElement>(null)
-  const signature = useRef<SVGPathElement>(null)
-  const cta = useMagnetic<HTMLAnchorElement>()
+  const root = useRef<HTMLElement>(null);
+  const heading = useRef<HTMLHeadingElement>(null);
+  const tagline = useRef<HTMLParagraphElement>(null);
+  const grid = useRef<HTMLDivElement>(null);
+  const glow = useRef<HTMLDivElement>(null);
+  const portrait = useRef<HTMLDivElement>(null);
+  const cta = useMagnetic<HTMLAnchorElement>();
 
   useGSAP(
     () => {
-      const mm = gsap.matchMedia()
+      const unregister = registerStops(sectionStop(root.current));
+      const mm = gsap.matchMedia();
 
       /* ---------------- Full motion ---------------- */
       mm.add(MEDIA.motionOK, () => {
-        const intro = gsap.timeline({ defaults: { ease: 'expo.out' } })
+        // Every entrance here is built PAUSED and released by <Loader />, so it
+        // plays as the panel wipes rather than finishing unseen behind it.
+        const intro = gateIntro(
+          gsap.timeline({ defaults: { ease: "expo.out" } }),
+        );
 
         // SplitText's own `mask` option wraps each line in an overflow-clipped
         // element for us, so no hand-rolled wrapper divs are needed.
         // `autoSplit` re-splits on font load / resize, and returning the tween
         // from onSplit lets GSAP kill + rebuild it cleanly on each re-split.
         SplitText.create(heading.current, {
-          type: 'lines',
-          mask: 'lines',
+          type: "lines",
+          mask: "lines",
           autoSplit: true,
-          aria: 'auto', // keeps the real sentence in the a11y tree
+          aria: "auto", // keeps the real sentence in the a11y tree
           onSplit: (self) =>
-            gsap.from(self.lines, {
-              yPercent: 120,
-              duration: 1.2,
-              stagger: 0.08,
-              ease: 'expo.out',
-            }),
-        })
+            gateIntro(
+              fromLines(self.lines, {
+                yPercent: 120,
+                // Skew settle. skewX (not skewY) because the shear then scales
+                // with the LINE HEIGHT, not the line width — on a 158px display
+                // face a skewY would displace the far edge by ~80px and clip
+                // against the mask wrapper. transformOrigin pins the left edge
+                // so the shear pushes right, into the container's slack.
+                skewX: 5,
+                transformOrigin: "left top",
+                duration: 1.2,
+                // Widened from 0.08 so DEREK D. lands a clear beat behind
+                // LENNY DANY and the white/grey hierarchy survives the motion.
+                stagger: 0.14,
+                ease: "expo.out",
+              }),
+            ),
+        });
+
+        // Tagline gets a masked line wipe rather than a fade, so the text edge
+        // stays crisp. Standalone with a delay instead of living on `intro`:
+        // autoSplit rebuilds this tween on every re-split, and a timeline
+        // holding the old reference would go stale.
+        SplitText.create(tagline.current, {
+          type: "lines",
+          mask: "lines",
+          autoSplit: true,
+          aria: "auto",
+          onSplit: (self) =>
+            gateIntro(
+              fromLines(self.lines, {
+                yPercent: 110,
+                duration: 0.7,
+                stagger: 0.06,
+                delay: 0.55, // matches the old timeline position
+                ease: "expo.out",
+              }),
+            ),
+        });
 
         intro
-          .from('[data-hero-eyebrow]', { opacity: 0, y: 20, duration: 0.9 }, 0.1)
           .from(
-            '[data-hero-rule]',
-            { scaleX: 0, transformOrigin: 'left center', duration: 1 },
+            "[data-hero-eyebrow]",
+            { opacity: 0, y: 20, duration: 0.9 },
+            0.1,
+          )
+          .from(
+            "[data-hero-rule]",
+            { scaleX: 0, transformOrigin: "left center", duration: 1 },
             0.15,
           )
+          // Portrait rises out of its own clip while the name is still landing,
+          // so the figure and the type arrive as one move rather than in turn.
           .from(
-            ['[data-hero-tagline]', '[data-hero-actions]'],
-            { opacity: 0, y: 28, duration: 1, stagger: 0.1 },
-            0.55,
+            portrait.current,
+            {
+              clipPath: "inset(100% 0 0 0)",
+              yPercent: 12,
+              scale: 1.06,
+              duration: 1.3,
+            },
+            0.35,
           )
-          .from('[data-hero-scroll]', { opacity: 0, duration: 0.8 }, 0.9)
+          .from("[data-hero-actions]", { opacity: 0, y: 28, duration: 1 }, 0.65)
+          .from("[data-hero-scroll]", { opacity: 0, duration: 0.8 }, 0.9);
 
-        // Signature line-draw. DrawSVGPlugin computes the true path length
-        // instead of the mockup's hard-coded stroke-dasharray: 900, so the
-        // stroke stays correct at any viewport width.
-        gsap.fromTo(
-          signature.current,
-          { drawSVG: '0%' },
-          { drawSVG: '100%', duration: 3.2, ease: 'power2.inOut', delay: 0.4 },
-        )
-      })
+        // (The squiggle signature line was removed — the portrait contour in
+        // <PortraitOutline /> now carries the drawn-line motif on its own.)
+      });
 
       /* ---------------- Parallax ---------------- */
       const parallax = (target: Element | null, factor: number) => {
-        if (!target) return
+        if (!target) return;
         gsap.to(target, {
           y: () => window.innerHeight * factor,
-          ease: 'none',
+          ease: "none",
           scrollTrigger: {
             trigger: root.current,
-            start: 'top top',
-            end: 'bottom top',
+            start: "top top",
+            end: "bottom top",
             scrub: true,
             invalidateOnRefresh: true,
           },
-        })
-      }
+        });
+      };
 
       mm.add(MEDIA.desktopMotion, () => {
-        parallax(grid.current, 0.35)
-        parallax(glow.current, 0.7)
-      })
+        parallax(grid.current, 0.35);
+        parallax(glow.current, 0.7);
+
+        /* ---------------- Pointer drift ----------------
+           The scroll parallax above already owns `y` on both layers, so this
+           writes `x` only — two tweens on one property would fight. quickTo
+           re-targets a single tween, so pointermove never allocates.
+           Deliberately tiny: a few px, felt more than seen. */
+        const gridX = gsap.quickTo(grid.current, "x", {
+          duration: 0.8,
+          ease: "power3",
+        });
+        const glowX = gsap.quickTo(glow.current, "x", {
+          duration: 1.1,
+          ease: "power3",
+        });
+
+        const onMove = (event: PointerEvent) => {
+          const ratio = event.clientX / window.innerWidth - 0.5; // -0.5..0.5
+          gridX(ratio * -16); // ±8px, opposing the pointer
+          glowX(ratio * 28); // ±14px, following it — the split builds depth
+        };
+
+        window.addEventListener("pointermove", onMove, { passive: true });
+        return () => window.removeEventListener("pointermove", onMove);
+      });
 
       // Mobile keeps a hint of depth at 0.15x, per the design spec.
       mm.add(MEDIA.mobileMotion, () => {
-        parallax(grid.current, 0.15)
-        parallax(glow.current, 0.15)
-      })
+        parallax(grid.current, 0.15);
+        parallax(glow.current, 0.15);
+      });
 
       /* ---------------- Reduced motion ---------------- */
       mm.add(MEDIA.reduced, () => {
         gsap.from(
           [
             heading.current,
-            '[data-hero-eyebrow]',
-            '[data-hero-tagline]',
-            '[data-hero-actions]',
+            "[data-hero-eyebrow]",
+            "[data-hero-tagline]",
+            "[data-hero-actions]",
           ],
-          { opacity: 0, duration: 0.2, ease: 'none', stagger: 0.04 },
-        )
-        gsap.set(signature.current, { drawSVG: '100%' })
-      })
+          { opacity: 0, duration: 0.2, ease: "none", stagger: 0.04 },
+        );
+      });
+      return unregister;
     },
     { scope: root },
-  )
+  );
 
   return (
     <section
@@ -123,13 +194,43 @@ export default function Hero() {
         className="pointer-events-none absolute top-[12%] -right-[6%] h-[640px] w-[640px] rounded-full blur-[20px] will-change-transform"
         style={{
           background:
-            'radial-gradient(circle, rgb(255 70 85 / 0.16), transparent 62%)',
+            "radial-gradient(circle, rgb(255 70 85 / 0.16), transparent 62%)",
         }}
       />
       <div
         aria-hidden
         className="dot-field animate-drift pointer-events-none absolute inset-0 opacity-50"
       />
+
+      {/* Portrait cutout, anchored to the right edge and sitting BEHIND the
+          type (it precedes the relative content wrapper in the DOM). The
+          .portrait-fade mask dissolves its left and bottom edges into the page
+          so it reads as part of the background rather than a pasted-on photo,
+          and never competes with the headline for attention. Desktop only —
+          at narrow widths there is no room beside the type. */}
+      <div
+        ref={portrait}
+        aria-hidden
+        className="pointer-events-none absolute right-[-4%] bottom-0 hidden h-[76svh] w-[46vw] max-w-[640px] will-change-transform lg:block"
+      >
+        {/* The fade mask wraps ONLY the photo. If the outline shared it, the
+            left shoulder — the point the contour starts from — would be masked
+            away. Leaving the stroke unmasked also means the contour carries on
+            across the region where the photo has already dissolved, which
+            reads as a wireframe over the figure rather than a sticker on it. */}
+        <div className="portrait-fade absolute inset-0">
+          <Image
+            src="/lenny-nobackground.png"
+            alt=""
+            fill
+            priority
+            sizes="46vw"
+            className="object-contain object-bottom"
+          />
+        </div>
+
+        <PortraitOutline />
+      </div>
 
       <div className="relative mx-auto grid w-full max-w-[1240px] gap-8 md:gap-[42px]">
         <p
@@ -154,9 +255,13 @@ export default function Hero() {
           </span>
         </h1>
 
-        <div className="grid items-end gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,420px)] lg:gap-[60px]">
+        {/* Single column now the squiggle is gone — the old
+            [1fr_420px] split existed only to hold it, and keeping it would
+            reserve 420px of dead space beside the tagline. */}
+        <div className="grid items-end gap-10">
           <div className="grid gap-7 md:gap-[30px]">
             <p
+              ref={tagline}
               data-hero-tagline
               className="text-body font-display m-0 max-w-[640px] text-[clamp(20px,2.3vw,34px)] leading-[1.24] tracking-[-0.02em] text-pretty"
             >
@@ -170,6 +275,7 @@ export default function Hero() {
               <a
                 ref={cta}
                 href="#work"
+                data-cursor-label="View"
                 className="bg-accent text-ink inline-flex w-full items-center justify-center gap-3.5 rounded-[2px] px-8 py-5 font-mono text-xs font-bold tracking-[0.2em] uppercase transition-shadow duration-300 will-change-transform hover:shadow-[0_0_44px_rgb(255_70_85_/_0.45)] sm:w-auto"
               >
                 View Work <span aria-hidden>→</span>
@@ -181,21 +287,6 @@ export default function Hero() {
               </p>
             </div>
           </div>
-
-          <svg
-            viewBox="0 0 420 120"
-            aria-hidden
-            className="h-auto w-full opacity-90"
-          >
-            <path
-              ref={signature}
-              d="M8 92 C 46 34, 62 100, 96 62 S 132 12, 168 68 C 196 108, 214 30, 244 58 C 272 84, 292 26, 322 60 C 348 90, 372 44, 412 52"
-              fill="none"
-              stroke="var(--color-accent)"
-              strokeWidth={2}
-              strokeLinecap="round"
-            />
-          </svg>
         </div>
       </div>
 
@@ -208,5 +299,5 @@ export default function Hero() {
         <span className="block h-10 w-px bg-gradient-to-b from-[var(--color-accent)] to-transparent" />
       </div>
     </section>
-  )
+  );
 }
