@@ -1,4 +1,4 @@
-@import 'tailwindcss';
+@import "tailwindcss";
 
 /* ---------------------------------------------------------------------------
    DESIGN TOKENS
@@ -29,7 +29,8 @@
 /* Fonts are injected by next/font at runtime, so they must be `inline`
    (referenced, not resolved at build time). */
 @theme inline {
-  --font-display: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
+  --font-display:
+    var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
   --font-body: var(--font-ibm-plex), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-jetbrains), ui-monospace, monospace;
 }
@@ -91,9 +92,9 @@ body {
 
 /* The custom cursor replaces the native one on fine-pointer devices only. */
 @media (hover: hover) and (pointer: fine) {
-  body[data-custom-cursor='true'],
-  body[data-custom-cursor='true'] a,
-  body[data-custom-cursor='true'] button {
+  body[data-custom-cursor="true"],
+  body[data-custom-cursor="true"] a,
+  body[data-custom-cursor="true"] button {
     cursor: none;
   }
 }
@@ -131,6 +132,24 @@ body {
   animation: drift 24s linear infinite alternate;
 }
 
+/* Lightbox photo entrance. CSS rather than GSAP because the element is created
+   and destroyed by React state, not by a timeline — a keyframe fires on mount
+   with no ref wiring or cleanup to get wrong. */
+@keyframes frame-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-frame-in {
+  animation: frame-in 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
 .grain {
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4'/></filter><rect width='160' height='160' filter='url(%23n)'/></svg>");
   mix-blend-mode: overlay;
@@ -148,12 +167,51 @@ body {
   );
 }
 
+/* ---------------------------------------------------------------------------
+   HERO PORTRAIT
+   The fade has to run in whichever direction the TYPE approaches from, or the
+   figure cuts off against live text.
+   Phone: the type block sits ABOVE the figure, so the fade runs top-down.
+   lg:    the type sits BESIDE it, so the fade runs left-to-right, plus a
+          bottom fade so the crop never hard-cuts at the page edge.
+--------------------------------------------------------------------------- */
+.portrait-fade {
+  mask-image: linear-gradient(180deg, transparent 0%, #000 34%);
+}
+
+/* Nothing overlaps the figure on a phone any more, so it can carry real
+   presence instead of hiding at background opacity. */
+.portrait-mobile {
+  opacity: 0.72;
+}
+
+@media (min-width: 1024px) {
+  .portrait-fade {
+    mask-image:
+      linear-gradient(90deg, transparent, #000 42%),
+      linear-gradient(0deg, transparent 2%, #000 26%);
+    mask-composite: intersect;
+  }
+
+  .portrait-mobile {
+    opacity: 1;
+  }
+}
+
 .dot-field {
-  background-image: radial-gradient(rgb(255 70 85 / 0.5) 1px, transparent 1.4px);
+  background-image: radial-gradient(
+    rgb(255 70 85 / 0.5) 1px,
+    transparent 1.4px
+  );
   background-size: 220px 190px;
 }
 
 .marquee-mask {
+  /* Pre-JS default, declared HERE (the row container) rather than on the
+     .spot-* layers: Stack.tsx writes --spot-x onto this element, and a value
+     declared on the children themselves would shadow what they inherit,
+     freezing the spotlight off-canvas forever. */
+  --spot-x: -400px;
   mask-image: linear-gradient(
     90deg,
     transparent,
@@ -161,6 +219,51 @@ body {
     #000 88%,
     transparent
   );
+}
+
+/* ---------------------------------------------------------------------------
+   STACK SPOTLIGHT
+   Two masked overlay layers sit on top of the dim base marquee: a wide white
+   band and a narrow accent core. Both read --spot-x, which Stack.tsx writes on
+   the shared row container from scroll progress — one property write per row
+   per frame, versus measuring 40 word spans.
+   Because the mask lives on a container-sized wrapper (not on the translating
+   inner track), --spot-x is in container coordinates and stays put while the
+   words travel underneath it.
+--------------------------------------------------------------------------- */
+.spot-wide {
+  mask-image: linear-gradient(
+    90deg,
+    transparent calc(var(--spot-x) - 260px),
+    #000 calc(var(--spot-x) - 60px),
+    #000 calc(var(--spot-x) + 60px),
+    transparent calc(var(--spot-x) + 260px)
+  );
+}
+
+.spot-core {
+  mask-image: linear-gradient(
+    90deg,
+    transparent calc(var(--spot-x) - 110px),
+    #000 var(--spot-x),
+    transparent calc(var(--spot-x) + 110px)
+  );
+}
+
+/* Reduced motion runs no sweep, so the overlays would sit as a stray lit band
+   parked mid-row. Drop them and let the dim base layer stand alone. */
+@media (prefers-reduced-motion: reduce) {
+  .spot-wide,
+  .spot-core {
+    display: none;
+  }
+}
+
+/* Companion to freezeScroll() in lib/lenis.ts. preventDefault alone is not
+   reliable on touch — a browser that has already committed to panning can
+   ignore it. pinch-zoom blocks the pan but keeps zoom available. */
+html[data-scroll-locked] body {
+  touch-action: pinch-zoom;
 }
 
 /* Hide the horizontal scrollbar on the mobile card rail. */
@@ -173,7 +276,8 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .animate-blink,
-  .animate-drift {
+  .animate-drift,
+  .animate-frame-in {
     animation: none !important;
   }
   html {
@@ -183,10 +287,12 @@ body {
 
 /* ---------------------------------------------------------------------------
    WORK SECTION STAGE
-   These rules must match components/sections/Work.tsx's MEDIA.desktopMotion
-   gate EXACTLY. If CSS clipped the stage while GSAP declined to pin (e.g. a
-   reduced-motion desktop user), the cards would be unreachable.
-   Default = mobile/reduced: a native horizontal scroll-snap rail.
+   These rules must match the gate in components/sections/Work.tsx EXACTLY. If
+   CSS collapsed the rail into a deck while GSAP declined to pin (a
+   reduced-motion user, say), the cards would be stacked on top of each other
+   and unreachable.
+   Default = reduced motion: a native horizontal scroll-snap rail, which needs
+   no JS at all.
 --------------------------------------------------------------------------- */
 [data-work-track] {
   overflow-x: auto;
@@ -198,15 +304,73 @@ body {
   scroll-snap-align: center;
 }
 
-@media (min-width: 768px) and (prefers-reduced-motion: no-preference) {
+/* The deck now runs at EVERY width, not just desktop. It has to: ScrollSnap
+   captures touch to step between sections, which means the horizontal rail
+   above can no longer be swiped on a phone. Making the deck universal keeps
+   one gesture meaning one thing everywhere — a vertical swipe advances,
+   whether that is the next card or the next section. */
+@media (prefers-reduced-motion: no-preference) {
   [data-work-stage] {
     height: 100svh;
     overflow: hidden;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    /* The rail layout carries py-24 for its own spacing. Inside a fixed-height
+       stage that padding comes straight out of the deck, which on a phone is
+       most of the room the card had. */
+    padding-block: 0;
+    gap: 0;
   }
 
+  /* Every card is placed in the SAME grid cell, so they stack. Grid rather
+     than absolute positioning: an abspos card with inset:0 + margin:auto
+     resolves against the PADDING box, so the track padding is ignored and the
+     card can run off the right edge on a narrow screen. place-items centres it
+     honestly inside the padding at any width. perspective makes the rotateX in
+     Work.tsx read as depth rather than a vertical squash. */
   [data-work-track] {
-    overflow-x: visible;
+    position: relative;
+    display: grid;
+    place-items: center;
+    overflow: visible;
     scroll-snap-type: none;
-    will-change: transform;
+    perspective: 1400px;
+  }
+
+  [data-work-track] > [data-card] {
+    grid-area: 1 / 1;
+    width: 100%;
+    max-width: 640px;
+    /* Content-sized, not stretched to a fixed height. A fixed height left most
+       of a phone card empty, because the body text does not come close to
+       filling it. */
+    height: auto;
+    min-height: 0;
+    max-height: 100%;
+    will-change: transform, opacity;
+    transform-style: preserve-3d;
+  }
+}
+
+html[data-scroll-locked] body {
+  touch-action: pinch-zoom;
+}
+
+/* Hide the horizontal scrollbar on the mobile card rail. */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-blink,
+  .animate-drift,
+  .animate-frame-in {
+    animation: none !important;
+  }
+  html {
+    scroll-behavior: auto !important;
   }
 }

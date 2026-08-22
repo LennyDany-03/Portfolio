@@ -1,61 +1,163 @@
-'use client'
+"use client";
 
-import { useRef } from 'react'
-import { gsap, useGSAP, SplitText, MEDIA } from '@/lib/gsap'
-import { useMagnetic } from '@/hooks/useMagnetic'
-import { SOCIAL_LINKS, EMAIL } from '@/lib/data'
+import { useRef } from "react";
+import { gsap, useGSAP, SplitText, MEDIA } from "@/lib/gsap";
+import { registerStops, sectionStop } from "@/lib/snap";
+import { directionalReveal, retainDirectionObserver } from "@/lib/direction";
+import { useMagnetic } from "@/hooks/useMagnetic";
+import { SOCIAL_LINKS, EMAIL } from "@/lib/data";
+import { NEXT_LABELS } from "@/lib/data";
 
 export default function Contact() {
-  const root = useRef<HTMLElement>(null)
-  const heading = useRef<HTMLHeadingElement>(null)
-  const mail = useMagnetic<HTMLAnchorElement>()
+  const root = useRef<HTMLElement>(null);
+  const heading = useRef<HTMLHeadingElement>(null);
+  const mail = useMagnetic<HTMLAnchorElement>();
 
   useGSAP(
     () => {
-      const mm = gsap.matchMedia()
+      const unregister = registerStops(
+        sectionStop(root.current, "contact", NEXT_LABELS.contact),
+      );
+      const mm = gsap.matchMedia();
 
       mm.add(MEDIA.motionOK, () => {
+        const release = retainDirectionObserver();
+
         SplitText.create(heading.current, {
-          type: 'lines',
-          mask: 'lines',
+          type: "lines",
+          mask: "lines",
           autoSplit: true,
-          aria: 'auto',
-          onSplit: (self) =>
-            gsap.from(self.lines, {
-              yPercent: 115,
-              duration: 1.1,
-              stagger: 0.08,
-              ease: 'expo.out',
+          aria: "auto",
+          onSplit: (self) => {
+            // "shipping?" is the accent word and the payoff of the sentence, so
+            // it travels further, runs longer, and overlaps the tail of the
+            // lines above it instead of landing on the same even beat.
+            //
+            // Selected by CONTENT, not by index: at narrow widths "Got
+            // something" wraps and lines[2] would no longer be the right line.
+            const isShip = (l: Element) =>
+              !!l.textContent?.includes("shipping");
+            const ship = self.lines.filter(isShip);
+            const rest = self.lines.filter((l) => !isShip(l));
+
+            // Guarded the same way as fromLines(): autoSplit can re-run this
+            // with zero lines, and .from([]) logs "GSAP target not found".
+            if (!self.lines.length) return;
+
+            const tl = gsap.timeline({
               scrollTrigger: {
                 trigger: heading.current,
-                start: 'top 82%',
+                start: "top 82%",
                 once: true,
               },
-            }),
-        })
+            });
 
-        gsap.from('[data-contact-item]', {
-          opacity: 0,
-          y: 26,
-          duration: 0.8,
-          stagger: 0.08,
-          ease: 'power3.out',
-          scrollTrigger: { trigger: root.current, start: 'top 60%', once: true },
-        })
-      })
+            if (rest.length) {
+              tl.from(rest, {
+                yPercent: 115,
+                duration: 1,
+                stagger: 0.08,
+                ease: "expo.out",
+              });
+            }
+            if (ship.length) {
+              tl.from(
+                ship,
+                { yPercent: 125, duration: 1.25, ease: "expo.out" },
+                rest.length ? "-=0.75" : 0,
+              );
+            }
+
+            return tl;
+          },
+        });
+
+        directionalReveal("[data-contact-item]", {
+          distance: 32,
+          start: "top 88%",
+          reversible: false,
+        });
+
+        // Footer links stagger individually — [data-contact-item] only reveals
+        // the two big blocks, so without this the four socials arrive as a slab.
+        directionalReveal("[data-social]", {
+          trigger: root.current,
+          distance: 14,
+          duration: 0.5,
+          stagger: 0.05,
+          start: "top 45%",
+          reversible: false,
+        });
+
+        /* ---------------- Email character ripple ----------------
+           Replaces the old ScrambleText hover (the plugin is no longer
+           registered anywhere). Each character lifts and settles in sequence,
+           so a wave runs left-to-right across the address — tactile and quick,
+           without the "hacker terminal" register scrambling brings.
+
+           The label is wrapped in its own span so the trailing arrow glyph is
+           not swept up in the split. */
+        const label =
+          mail.current?.querySelector<HTMLElement>("[data-email-text]");
+        let detachRipple: (() => void) | undefined;
+
+        if (label) {
+          const split = SplitText.create(label, { type: "chars" });
+
+          // Built once and replayed, rather than allocating a timeline per
+          // hover — the address is 20 characters, so that would be 20 tweens
+          // discarded on every pointerenter.
+          const ripple = gsap
+            .timeline({ paused: true })
+            .to(split.chars, {
+              yPercent: -55,
+              duration: 0.16,
+              stagger: 0.012,
+              ease: "power2.in",
+            })
+            .to(
+              split.chars,
+              {
+                yPercent: 0,
+                duration: 0.3,
+                stagger: 0.012,
+                ease: "back.out(2.2)",
+              },
+              0.1,
+            );
+
+          const onEnter = () => ripple.restart();
+          mail.current?.addEventListener("pointerenter", onEnter);
+
+          detachRipple = () => {
+            mail.current?.removeEventListener("pointerenter", onEnter);
+            split.revert();
+          };
+        }
+
+        return () => {
+          detachRipple?.();
+          release();
+        };
+      });
 
       mm.add(MEDIA.reduced, () => {
-        gsap.from([heading.current, '[data-contact-item]'], {
+        gsap.from([heading.current, "[data-contact-item]"], {
           opacity: 0,
           duration: 0.2,
-          ease: 'none',
+          ease: "none",
           stagger: 0.04,
-          scrollTrigger: { trigger: root.current, start: 'top 75%', once: true },
-        })
-      })
+          scrollTrigger: {
+            trigger: root.current,
+            start: "top 75%",
+            once: true,
+          },
+        });
+      });
+      return unregister;
     },
     { scope: root },
-  )
+  );
 
   return (
     <footer
@@ -66,7 +168,7 @@ export default function Contact() {
       <div className="mx-auto grid max-w-[1240px] gap-16 md:gap-[90px]">
         <div className="grid justify-items-start gap-8 md:gap-10">
           <p className="text-accent font-mono text-[11px] tracking-[0.22em]">
-            05 / CONTACT
+            06 / CONTACT
           </p>
 
           <h2
@@ -78,14 +180,21 @@ export default function Contact() {
             <span className="text-accent block">shipping?</span>
           </h2>
 
-          <a
-            ref={mail}
-            data-contact-item
-            href={'mailto:' + EMAIL}
-            className="border-accent text-accent hover:bg-accent hover:text-ink inline-flex w-full items-center justify-center gap-4 border px-8 py-5 font-mono text-[11px] font-bold tracking-[0.2em] break-all uppercase transition-colors duration-300 will-change-transform sm:w-auto sm:px-[38px] sm:text-xs"
-          >
-            {EMAIL} <span aria-hidden>→</span>
-          </a>
+          {/* The reveal (y) and the magnetic pull (also y, via quickTo) would
+              fight over the same transform if they shared an element, so the
+              wrapper owns the reveal and the anchor owns the magnetism. The
+              width classes mirror the anchor's, keeping the grid layout
+              byte-identical to before. */}
+          <div data-contact-item className="w-full sm:w-auto">
+            <a
+              ref={mail}
+              data-cursor-label="Send"
+              href={"mailto:" + EMAIL}
+              className="border-accent text-accent hover:bg-accent hover:text-ink inline-flex w-full items-center justify-center gap-4 border px-8 py-5 font-mono text-[11px] font-bold tracking-[0.2em] break-all uppercase transition-colors duration-300 will-change-transform sm:w-auto sm:px-[38px] sm:text-xs"
+            >
+              <span data-email-text>{EMAIL}</span> <span aria-hidden>→</span>
+            </a>
+          </div>
         </div>
 
         <div
@@ -99,7 +208,9 @@ export default function Contact() {
                 href={link.href}
                 target="_blank"
                 rel="noreferrer"
-                className="text-muted hover:text-accent transition-colors duration-300"
+                data-social
+                data-cursor-label="Open"
+                className="text-muted hover:text-accent inline-block transition-colors duration-300"
               >
                 {link.label}
               </a>
@@ -115,5 +226,5 @@ export default function Contact() {
         </div>
       </div>
     </footer>
-  )
+  );
 }

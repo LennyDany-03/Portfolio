@@ -1,125 +1,239 @@
-'use client'
+"use client";
 
-import { useRef } from 'react'
-import { gsap, useGSAP, MEDIA } from '@/lib/gsap'
-import { PROJECTS } from '@/lib/data'
+import { useRef } from "react";
+import { gsap, useGSAP, ScrollTrigger, Observer, MEDIA } from "@/lib/gsap";
+import { retainDirectionObserver } from "@/lib/direction";
+import { scrollToY } from "@/lib/lenis";
+import { registerStops } from "@/lib/snap";
+import { PROJECTS, NEXT_LABELS } from "@/lib/data";
+
+/**
+ * Resting transform for a card, by its distance from the active one.
+ *
+ *   p < 0  already read — swiped up and out, tilted away from the viewer
+ *   p = 0  active
+ *   p > 0  queued — stacked below, progressively smaller and dimmer
+ *
+ * Returning a plain object (rather than tweening ad hoc) means the deck can be
+ * re-applied idempotently from any index, which is what makes jumping several
+ * cards at once — or landing mid-deck on a refresh — settle correctly.
+ */
+function deckState(p: number) {
+  if (p < 0) {
+    return {
+      yPercent: -62,
+      scale: 0.9,
+      rotateX: 14,
+      opacity: 0,
+      zIndex: 0,
+      filter: "blur(6px)",
+    };
+  }
+  if (p === 0) {
+    return {
+      yPercent: 0,
+      scale: 1,
+      rotateX: 0,
+      opacity: 1,
+      zIndex: 40,
+      filter: "blur(0px)",
+    };
+  }
+  return {
+    yPercent: 5 + p * 4,
+    scale: 1 - p * 0.06,
+    rotateX: -5,
+    opacity: p === 1 ? 0.42 : p === 2 ? 0.18 : 0,
+    zIndex: 40 - p,
+    filter: `blur(${Math.min(p * 2, 6)}px)`,
+  };
+}
 
 export default function Work() {
-  const root = useRef<HTMLElement>(null)
-  const track = useRef<HTMLDivElement>(null)
-  const rail = useRef<HTMLSpanElement>(null)
-  const counter = useRef<HTMLSpanElement>(null)
+  const root = useRef<HTMLElement>(null);
+  const track = useRef<HTMLDivElement>(null);
+  const rail = useRef<HTMLSpanElement>(null);
+  const counter = useRef<HTMLSpanElement>(null);
 
   useGSAP(
     () => {
-      const mm = gsap.matchMedia()
-      const total = PROJECTS.length
+      const mm = gsap.matchMedia();
+      const total = PROJECTS.length;
 
       /* ------------------------------------------------------------------
-         Desktop: real ScrollTrigger pin + scrub.
-         The horizontal position is a genuine tween owned by ScrollTrigger —
-         no getBoundingClientRect() math in a scroll handler anywhere.
+         Pinned card deck — every width.
+
+         Transport is a pinned ScrollTrigger with snap, NOT an Observer that
+         swallows the wheel. Snapping to 1/(total-1) means one ordinary scroll
+         gesture settles on exactly one card — the same "one flick, one card"
+         feel — while keyboard, scrollbar, trackpad and touch all keep working
+         and the user can never be trapped inside a section that has stopped
+         responding. Observer is used for what it is uniquely good at below:
+         reading a drag, and reporting gesture direction.
       ------------------------------------------------------------------ */
-      mm.add(MEDIA.desktopMotion, () => {
-        const trackEl = track.current
-        const railEl = rail.current
-        const counterEl = counter.current
-        if (!trackEl || !railEl || !counterEl) return
+      mm.add(MEDIA.motionOK, () => {
+        const trackEl = track.current;
+        const railEl = rail.current;
+        const counterEl = counter.current;
+        if (!trackEl || !railEl || !counterEl) return;
 
-        // Measured on refresh only (invalidateOnRefresh re-runs these
-        // functions), never inside onUpdate.
-        const distance = () => trackEl.scrollWidth - trackEl.clientWidth
+        const release = retainDirectionObserver();
+        const cards = gsap.utils.toArray<HTMLElement>("[data-card]");
+        const setRail = gsap.quickSetter(railEl, "scaleX");
 
-        // How much page-scroll the traverse costs, as a multiple of the
-        // horizontal travel. 1 would be a literal 1:1 drag; the design calls
-        // for a slower, more deliberate pace (~360% of viewport), and deriving
-        // it from travel means adding a 6th card scales the pin automatically
-        // instead of needing the hard-coded 460vh the mockup used.
-        const SCROLL_RATIO = 1.6
+        let index = -1;
 
-        const setRail = gsap.quickSetter(railEl, 'scaleX')
-        const skewTo = gsap.quickTo('[data-card]', 'skewX', {
-          duration: 0.5,
-          ease: 'power3',
-        })
-        // One reusable delayed call instead of allocating one per frame.
-        const settle = gsap.delayedCall(0.15, () => skewTo(0)).pause()
+        /** Move the deck to `next`, animating only what actually changed. */
+        const goTo = (next: number, animate = true) => {
+          const clamped = gsap.utils.clamp(0, total - 1, next);
+          if (clamped === index) return;
+          const previous = index;
+          index = clamped;
 
-        let lastIndex = -1
+          cards.forEach((card, i) => {
+            const { zIndex, ...motion } = deckState(i - index);
+            // zIndex is set, never tweened: interpolating it would leave the
+            // outgoing card painting over the incoming one for most of the
+            // transition. Stacking order has to flip on frame one.
+            gsap.set(card, { zIndex });
 
-        gsap.to(trackEl, {
-          x: () => -distance(),
-          ease: 'none',
-          scrollTrigger: {
-            trigger: root.current,
-            start: 'top top',
-            end: () => '+=' + distance() * SCROLL_RATIO,
-            pin: true,
-            anticipatePin: 1,
-            scrub: 1,
-            invalidateOnRefresh: true,
-            onUpdate: (self) => {
-              // Rail + counter read ScrollTrigger's own progress — the single
-              // source of truth for how far through the track we are.
-              setRail(gsap.utils.mapRange(0, 1, 1 / total, 1, self.progress))
+            gsap.to(card, {
+              ...motion,
+              duration: animate ? 0.5 : 0,
+              ease: "power3.out",
+              overwrite: "auto",
+            });
+          });
 
-              const index = gsap.utils.clamp(
-                1,
-                total,
-                Math.floor(self.progress * total) + 1,
-              )
-              if (index !== lastIndex) {
-                lastIndex = index
-                counterEl.textContent =
-                  String(index).padStart(2, '0') +
-                  ' / ' +
-                  String(total).padStart(2, '0')
-              }
+          // Tag pills stagger in just behind the card that just became active.
+          if (animate && previous !== -1) {
+            const pills = cards[index].querySelectorAll("[data-pill]");
+            gsap.fromTo(
+              pills,
+              { opacity: 0, y: 10 },
+              {
+                opacity: 1,
+                y: 0,
+                duration: 0.4,
+                stagger: 0.04,
+                delay: 0.14,
+                ease: "power3.out",
+                overwrite: "auto",
+              },
+            );
+          }
 
-              // Velocity skew. getVelocity() is ScrollTrigger's cached value,
-              // so this costs no layout read.
-              skewTo(gsap.utils.clamp(-4, 4, self.getVelocity() / -400))
-              settle.restart(true)
-            },
+          setRail(gsap.utils.mapRange(0, total - 1, 1 / total, 1, index));
+          counterEl.textContent =
+            String(index + 1).padStart(2, "0") +
+            " / " +
+            String(total).padStart(2, "0");
+        };
+
+        goTo(0, false);
+
+        const st = ScrollTrigger.create({
+          trigger: root.current,
+          start: "top top",
+          // One viewport of scroll per transition. invalidateOnRefresh re-reads
+          // this on resize so the deck keeps its pacing at any window height.
+          end: () => "+=" + window.innerHeight * (total - 1),
+          pin: true,
+          // No anticipatePin. It pins slightly EARLY to smooth fast scrolling,
+          // which is exactly wrong when ScrollSnap teleports the page — the
+          // early pin fires against a scroll position that is about to jump,
+          // and leaves the section half-pinned.
+          invalidateOnRefresh: true,
+          // NO snap here. <ScrollSnap /> already lands the page exactly on the
+          // per-card stops registered below, and it gates on the same media
+          // query — so a snap would be a second authority animating the same
+          // scroll position, fighting Lenis and double-settling every card.
+          // If ScrollSnap ever disarms itself, this degrades to continuous
+          // scrubbing through the deck, which is still correct.
+          onUpdate: (self) => {
+            goTo(Math.round(self.progress * (total - 1)));
           },
-        })
+        });
 
-        gsap.from('[data-card]', {
-          opacity: 0,
-          y: 40,
-          duration: 0.8,
-          stagger: 0.07,
-          ease: 'power3.out',
-          scrollTrigger: { trigger: root.current, start: 'top 70%', once: true },
-        })
-      })
+        /* One snap stop per card, taken from the pin range. This is why a
+           gesture inside Work advances the DECK instead of skipping the whole
+           section: ScrollSnap sees five stops here, not one. Recomputed on
+           every collect(), so a resize that changes the pin length is picked
+           up without re-registering. */
+        const cardY = (i: number) =>
+          st.start + ((st.end - st.start) * i) / (total - 1);
 
-      /* ------------------------------------------------------------------
-         Below 768px: no pin, no scrub. The track is a native scroll-snap
-         rail (see globals.css) and cards just fade up on entry.
+        const unregisterStops = registerStops(() =>
+          Array.from({ length: total }, (_, i) => ({
+            y: cardY(i),
+            // Re-read from the live ScrollTrigger rather than a captured
+            // number: st.start/st.end move whenever the pin is recalculated.
+            measure: () => cardY(i),
+            // EVERY card shares the section id, so stepping between them never
+            // wipes the screen — the deck 3D transition is the transition here,
+            // and covering it would hide the one thing the user is looking at.
+            // Only entering or leaving Work crosses a section boundary.
+            section: "work",
+            eyebrow: NEXT_LABELS.work.eyebrow,
+            title: NEXT_LABELS.work.title,
+          })),
+        );
+
+        /** Drive the deck by moving the PAGE, so ScrollTrigger stays the single
+            source of truth for where we are — the deck can never disagree with
+            the scroll position. */
+        const scrollToCard = (target: number) => {
+          const clamped = gsap.utils.clamp(0, total - 1, target);
+          if (clamped === index) return;
+          const span = st.end - st.start;
+          scrollToY(st.start + (span * clamped) / (total - 1), 0.5);
+        };
+
+        /* Drag / swipe to flip a card. This is the part ScrollTrigger cannot
+           do: a pointer DRAG produces no scroll event at all, so without
+           Observer the deck would be wheel-only. preventDefault stays false —
+           the gesture is translated into a scroll position, never swallowed. */
+        const observer = Observer.create({
+          target: trackEl,
+          type: "pointer,touch",
+          preventDefault: false,
+          allowClicks: true,
+          tolerance: 60,
+          onUp: () => scrollToCard(index + 1),
+          onDown: () => scrollToCard(index - 1),
+          onLeft: () => scrollToCard(index + 1),
+          onRight: () => scrollToCard(index - 1),
+        });
+
+        return () => {
+          unregisterStops();
+          observer.kill();
+          release();
+        };
+      });
+
+      /* The old sub-768px branch is gone. It fell back to a native horizontal
+         scroll-snap rail, which cannot work now that ScrollSnap captures touch
+         to step between sections — the rail would never receive the swipe. The
+         deck above runs at every width instead, so one vertical gesture always
+         means one step. Reduced motion still gets the rail, from CSS only.
       ------------------------------------------------------------------ */
-      mm.add(MEDIA.mobileMotion, () => {
-        gsap.from('[data-card]', {
-          opacity: 0,
-          y: 30,
-          duration: 0.7,
-          stagger: 0.06,
-          ease: 'power3.out',
-          scrollTrigger: { trigger: root.current, start: 'top 75%', once: true },
-        })
-      })
 
       mm.add(MEDIA.reduced, () => {
-        gsap.from('[data-card]', {
+        gsap.from("[data-card]", {
           opacity: 0,
           duration: 0.2,
-          ease: 'none',
-          scrollTrigger: { trigger: root.current, start: 'top 75%', once: true },
-        })
-      })
+          ease: "none",
+          scrollTrigger: {
+            trigger: root.current,
+            start: "top 75%",
+            once: true,
+          },
+        });
+      });
     },
     { scope: root },
-  )
+  );
 
   return (
     <section
@@ -132,7 +246,7 @@ export default function Work() {
         data-work-stage
         className="flex flex-col justify-center gap-10 py-24 md:gap-0 md:py-0"
       >
-        <header className="mx-auto flex w-full max-w-[1240px] flex-col gap-4 px-5 md:px-10 md:pt-[130px] md:pb-10 lg:px-[60px]">
+        <header className="mx-auto flex w-full max-w-[1240px] flex-col gap-3 px-5 pt-24 pb-4 md:gap-4 md:px-10 md:pt-[118px] md:pb-6 lg:px-[60px]">
           <p className="text-accent font-mono text-[11px] tracking-[0.22em]">
             02 / SELECTED WORK
           </p>
@@ -152,7 +266,10 @@ export default function Work() {
             <article
               key={project.title}
               data-card
-              className="border-hair-2 bg-panel grid min-h-[420px] w-[85vw] shrink-0 grid-rows-[auto_1fr_auto] gap-6 border p-7 sm:w-[70vw] md:min-h-[460px] md:w-[520px] md:gap-[26px] md:p-[38px]"
+              // Width/height are taken over by the deck rules in globals.css;
+              // what matters here is that the CONTENT fits the smaller box a
+              // phone gets, so the type and padding step down.
+              className="border-hair-2 bg-panel grid min-h-[420px] w-[85vw] shrink-0 grid-rows-[auto_1fr_auto] gap-4 overflow-hidden border p-5 sm:w-[70vw] sm:p-6 md:min-h-0 md:w-[520px] md:gap-[26px] md:p-[38px]"
             >
               <div className="text-dim flex items-center justify-between font-mono text-[10px] tracking-[0.18em]">
                 <span className="text-accent">{project.index}</span>
@@ -160,13 +277,13 @@ export default function Work() {
               </div>
 
               <div className="grid content-start gap-4">
-                <h3 className="text-hi font-display m-0 text-[36px] font-semibold tracking-[-0.03em] md:text-[44px]">
+                <h3 className="text-hi font-display m-0 text-[26px] font-semibold tracking-[-0.03em] sm:text-[32px] md:text-[44px]">
                   {project.title}
                 </h3>
-                <p className="text-muted-2 m-0 text-[16px] leading-[1.6] md:text-[17px]">
+                <p className="text-muted-2 m-0 text-[14px] leading-[1.55] sm:text-[15px] md:text-[17px]">
                   {project.summary}
                 </p>
-                <p className="text-dim m-0 font-mono text-[11px] leading-[1.8]">
+                <p className="text-dim m-0 font-mono text-[10px] leading-[1.7] md:text-[11px]">
                   {project.detail}
                 </p>
               </div>
@@ -176,6 +293,7 @@ export default function Work() {
                   {project.stack.map((tech) => (
                     <li
                       key={tech}
+                      data-pill
                       className="text-muted border-hair-3 border px-2.5 py-1.5 font-mono text-[10px] tracking-[0.1em]"
                     >
                       {tech}
@@ -190,10 +308,11 @@ export default function Work() {
                       href={link.href}
                       target="_blank"
                       rel="noreferrer"
+                      data-cursor-label="Open"
                       className={
                         link.primary
-                          ? 'text-accent hover:text-accent-soft transition-colors'
-                          : 'text-dim hover:text-body transition-colors'
+                          ? "text-accent hover:text-accent-soft transition-colors"
+                          : "text-dim hover:text-body transition-colors"
                       }
                     >
                       {link.label} <span aria-hidden>↗</span>
@@ -208,12 +327,12 @@ export default function Work() {
           ))}
         </div>
 
-        <div className="mx-auto flex w-full max-w-[1240px] items-center gap-5 px-5 md:px-10 md:pt-12 lg:px-[60px]">
+        <div className="mx-auto flex w-full max-w-[1240px] items-center gap-4 px-5 pb-8 md:gap-5 md:px-10 md:pb-12 lg:px-[60px]">
           <span
             ref={counter}
             className="text-dim font-mono text-[11px] tracking-[0.18em] tabular-nums"
           >
-            01 / {String(PROJECTS.length).padStart(2, '0')}
+            01 / {String(PROJECTS.length).padStart(2, "0")}
           </span>
           <div
             aria-hidden
@@ -222,14 +341,15 @@ export default function Work() {
             <span
               ref={rail}
               className="bg-accent absolute inset-0 block origin-left"
-              style={{ transform: 'scaleX(0.2)' }}
+              style={{ transform: "scaleX(0.2)" }}
             />
           </div>
-          <span className="text-dim-2 font-mono text-[10px] tracking-[0.18em] md:hidden">
-            SWIPE →
+          <span className="text-dim-2 font-mono text-[10px] tracking-[0.18em]">
+            <span className="md:hidden">Swipe →</span>
+            <span className="hidden md:inline">Scroll / drag</span>
           </span>
         </div>
       </div>
     </section>
-  )
+  );
 }
