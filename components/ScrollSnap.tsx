@@ -54,7 +54,12 @@ export default function ScrollSnap() {
           // whole footer — becomes unreachable, because preventDefault has
           // already eaten the gesture by the time we decide not to move.
           if (!stops.length || maxY - stops[stops.length - 1].y > 8) {
-            stops.push({ y: maxY, curtain: true });
+            const bottom = () =>
+              Math.max(
+                0,
+                document.documentElement.scrollHeight - window.innerHeight,
+              );
+            stops.push({ y: maxY, measure: bottom, curtain: true });
           }
         };
 
@@ -122,9 +127,31 @@ export default function ScrollSnap() {
           // than a fast scroll past everything in between — and the jump
           // crosses every reveal trigger at once, so the incoming section
           // animates in exactly as the bands clear.
-          const covered = () => scrollToY(target.y, 0, true);
+          const covered = () => {
+            scrollToY(target.y, 0, true);
+
+            // Land, then CHECK. Engaging or releasing the Work pin changes
+            // layout, so the position measured a moment ago can be stale by a
+            // fraction of a viewport by the time we arrive — which is what
+            // parked the page halfway between Work and Stack. We are still
+            // fully covered here, so the correction is invisible.
+            requestAnimationFrame(() => {
+              const fresh = target.measure();
+              if (
+                Number.isFinite(fresh) &&
+                Math.abs(fresh - window.scrollY) > 2
+              ) {
+                scrollToY(fresh, 0, true);
+              }
+            });
+          };
+
           const usedCurtain =
-            target.curtain && runCurtain(delta > 0 ? 1 : -1, covered);
+            target.curtain &&
+            runCurtain(delta > 0 ? 1 : -1, covered, {
+              eyebrow: target.eyebrow,
+              title: target.title,
+            });
 
           // Uncurtained stop (a Work card): nothing is hiding the travel, so
           // animate it instead of teleporting.

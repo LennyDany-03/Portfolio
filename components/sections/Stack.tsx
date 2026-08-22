@@ -5,6 +5,7 @@ import { gsap, useGSAP, ScrollTrigger, MEDIA } from "@/lib/gsap";
 import { registerStops, sectionStop } from "@/lib/snap";
 import { directionalReveal, retainDirectionObserver } from "@/lib/direction";
 import { MARQUEE_ROW_A, MARQUEE_ROW_B, STACK_GRID } from "@/lib/data";
+import { NEXT_LABELS } from "@/lib/data";
 
 /** Widest mask shoulder in globals.css — the spotlight must start/end fully clear. */
 const SPOT_PAD = 260;
@@ -65,7 +66,7 @@ export default function Stack() {
 
   useGSAP(
     () => {
-      const unregister = registerStops(sectionStop(root.current));
+      const unregister = registerStops(sectionStop(root.current, NEXT_LABELS.stack));
       const mm = gsap.matchMedia();
 
       mm.add(MEDIA.motionOK, () => {

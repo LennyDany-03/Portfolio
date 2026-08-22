@@ -9,8 +9,15 @@
  * gsap.matchMedia callback where React state is not available.
  */
 
+/** Preview text shown on the curtain while the screen is covered. */
+export type CurtainLabel = { eyebrow?: string; title?: string };
+
 /** dir: 1 = travelling down the page, -1 = travelling up. */
-export type CurtainRunner = (dir: 1 | -1, onCovered: () => void) => void;
+export type CurtainRunner = (
+  dir: 1 | -1,
+  onCovered: () => void,
+  label?: CurtainLabel,
+) => void;
 
 let runner: CurtainRunner | null = null;
 
@@ -25,9 +32,13 @@ export const setCurtainRunner = (next: CurtainRunner | null) => {
  * Returns false if no curtain is mounted (reduced motion), so the caller can
  * fall back to simply animating the scroll instead of teleporting the page.
  */
-export function runCurtain(dir: 1 | -1, onCovered: () => void): boolean {
+export function runCurtain(
+  dir: 1 | -1,
+  onCovered: () => void,
+  label?: CurtainLabel,
+): boolean {
   if (!runner) return false;
-  runner(dir, onCovered);
+  runner(dir, onCovered, label);
   return true;
 }
 

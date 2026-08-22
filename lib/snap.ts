@@ -4,22 +4,32 @@
  * Registry of scroll "stops" — the discrete positions the page settles on when
  * <ScrollSnap /> steps forward or back.
  *
- * A registry rather than a static list of sections because not every stop is a
- * section top, and not every stop deserves the same transition. The Work deck
+ * A registry rather than a static list of sections, because not every stop is
+ * a section top and not every stop deserves the same treatment. The Work deck
  * contributes one stop per CARD from inside its own pinned ScrollTrigger, so a
- * gesture there advances the deck instead of skipping the section — but those
- * card steps are flagged `curtain: false`, because the deck already has its own
- * 3D card transition and wrapping that in a full-screen wipe would hide the
- * very thing the user is trying to look at.
- *
- * Providers are re-invoked on every collect(), so nothing is cached across a
- * resize or a ScrollTrigger refresh.
+ * gesture there advances the deck instead of skipping the section — and those
+ * card steps are flagged `curtain: false`, since the deck already has its own
+ * 3D transition and wrapping it in a full-screen wipe would hide the very
+ * thing the user is looking at.
  */
 export type Stop = {
-  /** Absolute document Y. */
+  /** Position at collect() time. Used for ordering and for `nearest()`. */
   y: number;
+  /**
+   * Re-measure this stop's position NOW.
+   *
+   * A pin engaging or releasing changes layout, so a position measured before
+   * a jump can be stale by a fraction of a viewport by the time the jump lands
+   * — which is what parked the page halfway between Work and Stack. ScrollSnap
+   * calls this again one frame after jumping (still hidden behind the curtain)
+   * and corrects, so landings are exact whatever the pins did.
+   */
+  measure: () => number;
   /** Play the full-screen curtain when landing here? */
   curtain: boolean;
+  /** Shown on the curtain while covered, so the wipe previews what is next. */
+  eyebrow?: string;
+  title?: string;
 };
 
 type StopProvider = () => Stop[];
@@ -51,11 +61,23 @@ export function collectStops(): Stop[] {
 }
 
 /** Convenience provider for a plain section: one curtained stop at its top. */
-export function sectionStop(el: HTMLElement | null): StopProvider {
+export function sectionStop(
+  el: HTMLElement | null,
+  label?: { eyebrow: string; title: string },
+): StopProvider {
+  const measure = () =>
+    el ? el.getBoundingClientRect().top + window.scrollY : 0;
+
   return () => {
     if (!el) return [];
     return [
-      { y: el.getBoundingClientRect().top + window.scrollY, curtain: true },
+      {
+        y: measure(),
+        measure,
+        curtain: true,
+        eyebrow: label?.eyebrow,
+        title: label?.title,
+      },
     ];
   };
 }

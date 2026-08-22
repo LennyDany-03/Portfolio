@@ -5,6 +5,7 @@ import { gsap, useGSAP, SplitText, MEDIA, fromLines } from "@/lib/gsap";
 import { directionalReveal, retainDirectionObserver } from "@/lib/direction";
 import { registerStops, sectionStop } from "@/lib/snap";
 import { PROCESS_STEPS } from "@/lib/data";
+import { NEXT_LABELS } from "@/lib/data";
 
 /**
  * 04 / PROCESS — replaces the previous OFF THE CLOCK section.
@@ -19,7 +20,7 @@ export default function Process() {
 
   useGSAP(
     () => {
-      const unregister = registerStops(sectionStop(root.current));
+      const unregister = registerStops(sectionStop(root.current, NEXT_LABELS.process));
       const mm = gsap.matchMedia();
 
       mm.add(MEDIA.motionOK, () => {

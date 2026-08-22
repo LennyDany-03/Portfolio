@@ -5,7 +5,7 @@ import { gsap, useGSAP, ScrollTrigger, Observer, MEDIA } from "@/lib/gsap";
 import { retainDirectionObserver } from "@/lib/direction";
 import { scrollToY } from "@/lib/lenis";
 import { registerStops } from "@/lib/snap";
-import { PROJECTS } from "@/lib/data";
+import { PROJECTS, NEXT_LABELS } from "@/lib/data";
 
 /**
  * Resting transform for a card, by its distance from the active one.
@@ -139,7 +139,10 @@ export default function Work() {
           // this on resize so the deck keeps its pacing at any window height.
           end: () => "+=" + window.innerHeight * (total - 1),
           pin: true,
-          anticipatePin: 1,
+          // No anticipatePin. It pins slightly EARLY to smooth fast scrolling,
+          // which is exactly wrong when ScrollSnap teleports the page — the
+          // early pin fires against a scroll position that is about to jump,
+          // and leaves the section half-pinned.
           invalidateOnRefresh: true,
           // NO snap here. <ScrollSnap /> already lands the page exactly on the
           // per-card stops registered below, and it gates on the same media
@@ -157,14 +160,22 @@ export default function Work() {
            section: ScrollSnap sees five stops here, not one. Recomputed on
            every collect(), so a resize that changes the pin length is picked
            up without re-registering. */
+        const cardY = (i: number) =>
+          st.start + ((st.end - st.start) * i) / (total - 1);
+
         const unregisterStops = registerStops(() =>
           Array.from({ length: total }, (_, i) => ({
-            y: st.start + ((st.end - st.start) * i) / (total - 1),
+            y: cardY(i),
+            // Re-read from the live ScrollTrigger rather than a captured
+            // number: st.start/st.end move whenever the pin is recalculated.
+            measure: () => cardY(i),
             // Only ARRIVING at the section gets the curtain. Card-to-card steps
             // stay uncovered so the deck 3D transition is actually visible —
             // wiping the screen between cards would hide the one thing the
             // user is looking at.
             curtain: i === 0,
+            eyebrow: NEXT_LABELS.work.eyebrow,
+            title: NEXT_LABELS.work.title,
           })),
         );
 

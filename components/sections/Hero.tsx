@@ -4,6 +4,7 @@ import { useRef } from "react";
 import Image from "next/image";
 import { gsap, useGSAP, SplitText, MEDIA, fromLines } from "@/lib/gsap";
 import { registerStops, sectionStop } from "@/lib/snap";
+import { NEXT_LABELS } from "@/lib/data";
 import { gateIntro } from "@/lib/intro";
 import PortraitOutline from "@/components/PortraitOutline";
 import { useMagnetic } from "@/hooks/useMagnetic";
@@ -19,7 +20,7 @@ export default function Hero() {
 
   useGSAP(
     () => {
-      const unregister = registerStops(sectionStop(root.current));
+      const unregister = registerStops(sectionStop(root.current, NEXT_LABELS.hero));
       const mm = gsap.matchMedia();
 
       /* ---------------- Full motion ---------------- */

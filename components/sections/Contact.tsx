@@ -6,6 +6,7 @@ import { registerStops, sectionStop } from "@/lib/snap";
 import { directionalReveal, retainDirectionObserver } from "@/lib/direction";
 import { useMagnetic } from "@/hooks/useMagnetic";
 import { SOCIAL_LINKS, EMAIL } from "@/lib/data";
+import { NEXT_LABELS } from "@/lib/data";
 
 export default function Contact() {
   const root = useRef<HTMLElement>(null);
@@ -14,7 +15,7 @@ export default function Contact() {
 
   useGSAP(
     () => {
-      const unregister = registerStops(sectionStop(root.current));
+      const unregister = registerStops(sectionStop(root.current, NEXT_LABELS.contact));
       const mm = gsap.matchMedia();
 
       mm.add(MEDIA.motionOK, () => {

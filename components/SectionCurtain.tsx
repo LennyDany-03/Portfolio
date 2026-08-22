@@ -30,6 +30,9 @@ const LAYERS = [
 
 export default function SectionCurtain() {
   const root = useRef<HTMLDivElement>(null);
+  const label = useRef<HTMLDivElement>(null);
+  const eyebrow = useRef<HTMLSpanElement>(null);
+  const title = useRef<HTMLSpanElement>(null);
 
   useGSAP(
     () => {
@@ -50,8 +53,15 @@ export default function SectionCurtain() {
 
           let active: gsap.core.Timeline | null = null;
 
-          setCurtainRunner((dir, onCovered) => {
+          setCurtainRunner((dir, onCovered, text) => {
             active?.kill();
+
+            // Fill the preview BEFORE the sweep starts, so the words are
+            // already in place the instant the bands finish covering.
+            if (eyebrow.current)
+              eyebrow.current.textContent = text?.eyebrow ?? "";
+            if (title.current) title.current.textContent = text?.title ?? "";
+            const hasText = Boolean(text?.eyebrow || text?.title);
 
             // Travelling down the page means the panels sweep UP across it, so
             // they enter from below and leave through the top.
@@ -78,6 +88,24 @@ export default function SectionCurtain() {
               // opaque viewport, so one of them at 0 already hides everything.
               // Waiting for the last would show a needless pause.
               .call(onCovered, undefined, CURTAIN.in)
+              // The preview rises in under full cover and clears before the
+              // bands move again, so it is never seen sliding around.
+              .fromTo(
+                label.current,
+                { opacity: 0, y: 26 },
+                {
+                  opacity: hasText ? 1 : 0,
+                  y: 0,
+                  duration: 0.34,
+                  ease: "power3.out",
+                },
+                CURTAIN.in - 0.06,
+              )
+              .to(
+                label.current,
+                { opacity: 0, y: -18, duration: 0.22, ease: "power2.in" },
+                CURTAIN.in + CURTAIN.hold + CURTAIN.stagger * 2,
+              )
               .to(
                 layers,
                 {
@@ -105,6 +133,7 @@ export default function SectionCurtain() {
             active = null;
             gsap.set(root.current, { visibility: "hidden" });
             gsap.set(layers, { yPercent: 115 });
+            gsap.set(label.current, { opacity: 0 });
             setCurtainRunner(null);
           };
         },
@@ -148,6 +177,25 @@ export default function SectionCurtain() {
           </svg>
         </div>
       ))}
+
+      {/* Preview of the incoming section. Sits above the bands so it reads on
+          the ink layer, and is centred independently of them so it never
+          travels with the sweep. */}
+      <div
+        ref={label}
+        className="absolute inset-0 z-10 grid place-items-center px-8 opacity-0"
+      >
+        <div className="grid max-w-[900px] justify-items-center gap-5 text-center">
+          <span
+            ref={eyebrow}
+            className="text-accent font-mono text-[11px] tracking-[0.24em] uppercase"
+          />
+          <span
+            ref={title}
+            className="text-hi font-display text-[clamp(28px,5vw,76px)] leading-[1.02] font-semibold tracking-[-0.04em] text-balance"
+          />
+        </div>
+      </div>
     </div>
   );
 }

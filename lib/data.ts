@@ -251,6 +251,32 @@ export const PROCESS_STEPS: ProcessStep[] = [
   },
 ];
 
+/**
+ * Titles shown ON the curtain while it covers the screen, so the wipe previews
+ * what is arriving instead of being a blank black gap.
+ *
+ * Every string here is ALREADY on the page — each section eyebrow plus its own
+ * h2 — except ABOUT, whose h2 is a full paragraph and is condensed from its own
+ * opening line. Change them freely; nothing else reads these.
+ */
+export const NEXT_LABELS = {
+  hero: { eyebrow: "LDD", title: "Lenny Dany Derek D." },
+  about: { eyebrow: "01 / ABOUT", title: "Built end-to-end, alone." },
+  work: {
+    eyebrow: "02 / SELECTED WORK",
+    title: "Things that are running right now.",
+  },
+  stack: { eyebrow: "03 / STACK", title: "Whatever the problem needs." },
+  process: {
+    eyebrow: "04 / PROCESS",
+    title: "The same four moves, every time.",
+  },
+  contact: {
+    eyebrow: "05 / CONTACT",
+    title: "Got something that needs shipping?",
+  },
+} as const;
+
 export const NAV_LINKS = [
   { label: "Work", href: "#work" },
   { label: "Stack", href: "#stack" },

@@ -5,6 +5,7 @@ import { gsap, useGSAP, SplitText, MEDIA, fromLines } from "@/lib/gsap";
 import { registerStops, sectionStop } from "@/lib/snap";
 import { directionalReveal, retainDirectionObserver } from "@/lib/direction";
 import { STAT_BLOCKS } from "@/lib/data";
+import { NEXT_LABELS } from "@/lib/data";
 
 export default function About() {
   const root = useRef<HTMLElement>(null);
@@ -14,7 +15,7 @@ export default function About() {
 
   useGSAP(
     () => {
-      const unregister = registerStops(sectionStop(root.current));
+      const unregister = registerStops(sectionStop(root.current, NEXT_LABELS.about));
       const mm = gsap.matchMedia();
 
       mm.add(MEDIA.motionOK, () => {
