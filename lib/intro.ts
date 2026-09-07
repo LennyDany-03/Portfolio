@@ -36,6 +36,35 @@ export function releaseIntro() {
   waiting.clear();
 }
 
+let pending = 0;
+
+/**
+ * Release on the NEXT FRAME, unless a new intro claims the gate first.
+ *
+ * The loader's matchMedia cleanup must not strand the hero paused. But in dev,
+ * StrictMode mounts, tears down, and mounts again in one task — and a
+ * synchronous release in that teardown flips the gate open about three seconds
+ * before the panel actually clears, so the entire hero entrance plays unseen
+ * behind it and the handoff is impossible to work on.
+ *
+ * Deferring by a frame lets the remount cancel it. A real teardown has nothing
+ * to cancel it, so the release still lands.
+ */
+export function releaseIntroSoon() {
+  if (released || pending) return;
+  pending = requestAnimationFrame(() => {
+    pending = 0;
+    releaseIntro();
+  });
+}
+
+/** Called by a mounting intro to take ownership of the gate. */
+export function holdIntro() {
+  if (!pending) return;
+  cancelAnimationFrame(pending);
+  pending = 0;
+}
+
 /**
  * Hold an animation until the loader hands off, then play it.
  *

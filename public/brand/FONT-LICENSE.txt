@@ -1,0 +1,21 @@
+The LDD brand mark is drawn from glyph outlines of three typefaces, all
+released under the SIL Open Font License, Version 1.1.
+
+  Mrs Saint Delafield   — the "Lenny Dany" signature wordmark
+  Copyright (c) 2011, Sudtipos (www.sudtipos.com)
+  https://fonts.google.com/specimen/Mrs+Saint+Delafield
+
+  Monsieur La Doulaise  — the flourished L monogram
+  Copyright (c) 2011, Sudtipos (www.sudtipos.com)
+  https://fonts.google.com/specimen/Monsieur+La+Doulaise
+
+  JetBrains Mono        — the DD corner stamp
+  Copyright (c) 2020, JetBrains s.r.o. (https://www.jetbrains.com)
+  https://fonts.google.com/specimen/JetBrains+Mono
+
+No font binary is redistributed here. The outlines for the handful of glyphs
+used were extracted once by scripts/gen-logo.mjs into lib/logo.ts, which the
+OFL permits: derived works stay under the same licence, and the fonts
+themselves are not sold or bundled.
+
+Full licence text: https://scripts.sil.org/OFL

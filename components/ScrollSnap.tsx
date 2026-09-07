@@ -5,6 +5,7 @@ import { gsap, useGSAP, Observer, ScrollTrigger, MEDIA } from "@/lib/gsap";
 import { collectStops, type Stop } from "@/lib/snap";
 import { scrollToY, freezeScroll, thawScroll } from "@/lib/lenis";
 import { runCurtain, CURTAIN_TOTAL } from "@/lib/curtain";
+import { isIntroReleased, onIntroRelease } from "@/lib/intro";
 
 /**
  * Step duration for stops that do NOT play the curtain — Work card changes and
@@ -103,6 +104,13 @@ export default function ScrollSnap() {
 
         const go = (delta: number) => {
           if (!armed.current) return;
+          // Nothing moves until the loader hands off. useGSAP runs on a layout
+          // effect, so this Observer is live before the first paint — a wheel
+          // during the intro used to run a full curtain + teleport UNDER the
+          // panel (z-1000 vs the curtain's z-940), landing the visitor in
+          // About having never seen the hero. The freeze below still applies
+          // throughout; only the stepping waits.
+          if (!isIntroReleased()) return;
 
           if (animating) {
             // Watchdog, not an impatience counter. Counting blocked gestures
@@ -203,7 +211,7 @@ export default function ScrollSnap() {
            anchors through stepTo() also means clicking WORK gets the same
            curtain as swiping to it, rather than a second kind of navigation. */
         const onAnchorClick = (event: MouseEvent) => {
-          if (!armed.current) return;
+          if (!armed.current || !isIntroReleased()) return;
           if (event.defaultPrevented || event.metaKey || event.ctrlKey) return;
 
           const link = (event.target as Element | null)?.closest?.(
@@ -257,8 +265,13 @@ export default function ScrollSnap() {
         freezeScroll();
         // Stops depend on pin lengths, which are only final after a refresh.
         ScrollTrigger.addEventListener("refresh", refresh);
+        // The hero settles out of a 1.06 scale on handoff, so re-measure once
+        // it has. go() re-measures per gesture anyway; this just means the
+        // first gesture after the intro is not the one paying for it.
+        const offIntro = onIntroRelease(refresh);
 
         return () => {
+          offIntro();
           document.removeEventListener("click", onAnchorClick);
           ScrollTrigger.removeEventListener("refresh", refresh);
           observer.kill();

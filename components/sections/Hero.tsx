@@ -84,6 +84,23 @@ export default function Hero() {
         });
 
         intro
+          // The loader's mark zooms THROUGH the camera; the site has to arrive
+          // by settling back from slightly too close, or the push-through has
+          // nothing to hand off to. Scoped to the hero rather than <main>: a
+          // transform on <main> would become the containing block for every
+          // position:fixed layer above it — nav, cursor, curtain — and shift
+          // every ScrollTrigger measurement underneath. clearProps drops the
+          // transform on landing so not even this section keeps one.
+          .from(
+            root.current,
+            {
+              scale: 1.06,
+              duration: 1.4,
+              ease: "expo.out",
+              clearProps: "scale",
+            },
+            0,
+          )
           .from(
             "[data-hero-eyebrow]",
             { opacity: 0, y: 20, duration: 0.9 },

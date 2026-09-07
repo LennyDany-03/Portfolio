@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Font binaries fetched by scripts/gen-logo.mjs. Build inputs, not assets.
+scripts/fonts/

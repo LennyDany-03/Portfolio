@@ -97,6 +97,14 @@ resets visibility never runs, and the page goes black. Beats are derived in
   logs `GSAP target not found`.
 - `useGSAP` runs on `useLayoutEffect`, so `gsap.set(opacity: 0)` commits before
   first paint. There is no FOUC path — do not add CSS pre-hiding.
+- That guarantee covers the paint **after** hydration, not the one before it.
+  Anything visible on the server-rendered paint — in practice only `<Loader />`,
+  since everything else is behind it — must ship its start state as an **inline
+  style** in the markup, or the browser shows the finished state for as long as
+  hydration takes. The loader's two marks are `opacity: 0` inline for exactly
+  this reason, and the signature is handed back with a `gsap.set` in the layout
+  effect. This is an inline attribute, not CSS pre-hiding: no stylesheet rule
+  that GSAP then has to fight.
 - Reveals that hide elements need an "already past" guard, or a reload with a
   restored scroll position leaves them at `opacity: 0` forever. See
   `directionalReveal` in `lib/direction.ts`.
@@ -126,6 +134,61 @@ and Contact → 07.
 Moore-neighbour boundary trace over the portrait PNG's alpha channel. Regenerate
 only if the asset changes, and do not substitute a per-column top-edge scan: it
 cannot see the concave neck/shoulder notch.
+
+## The brand mark
+
+Two generators, run by hand — neither is wired into `npm run build`:
+
+```bash
+node scripts/gen-logo.mjs    # font outlines  -> lib/logo.ts
+node scripts/gen-brand.mjs   # lib/*.ts       -> public/brand/, app/ favicons
+```
+
+`lib/logo.ts` is **generated and overwritten wholesale**: glyph outlines for the
+"Lenny Dany" signature, the flourished `L`, and the `DD` stamp, lifted out of
+three OFL faces so nothing needs a webfont at runtime and the mark can be
+rasterised into a favicon. The TTFs land in `scripts/fonts/` (gitignored).
+Attribution is in `public/brand/FONT-LICENSE.txt`.
+
+`lib/brand.ts` is the hand-authored counterpart — the pen path, the flourish,
+the tile geometry and the intro beats. Kept **import-free** because
+`scripts/gen-brand.mjs` loads it from plain Node, which cannot resolve `@/`.
+That is also why it hardcodes the monogram's aspect ratio; the script asserts
+the literal still matches `MONOGRAM_SIZE` and throws if a regeneration reshaped
+the glyph box.
+
+`<BrandMark />` and the rasteriser build **different markup on purpose** — the
+component paints from CSS tokens, a PNG has none — but both take their numbers
+from `monogramFit(px)`, so the nav logo and the favicon cannot drift apart. That
+function also thickens the mark below 160px: Monsieur La Doulaise's hairlines
+are 0.28px at a 32px favicon, which rasterises to a faint smear rather than a
+thin line. Measured, 80 units is the width that reads; 120 fills the loops in.
+
+### The intro
+
+`components/Loader.tsx` writes the signature, collapses it into the monogram,
+then pushes the camera through the mark. The signature reveal is a **masked**
+one: DrawSVG runs on `SIGNATURE_PEN_PATH`, a fat invisible centreline stroked
+over the glyph, because drawing a font outline directly traces the letter's
+_edge_ rather than a pen. `SIGNATURE_PEN_WIDTH` is measured, not eyeballed —
+anything under 640 leaves permanent holes in the finished wordmark.
+
+Every timeline position is absolute, derived in `lib/brand.ts`, for the same
+reason the curtain's are. `INTRO_TOTAL` schedules `display: none`.
+
+The page "zooming out" behind the mark is one `scale: 1.06` tween on Hero's
+gated `intro` timeline. Do not move it to `<main>`: a transform there becomes
+the containing block for every `position: fixed` layer above it — nav, cursor,
+curtain — and shifts every ScrollTrigger measurement underneath.
+
+`ScrollSnap` steps only once `isIntroReleased()`. Without that gate a wheel
+during the intro runs a full curtain and teleport _underneath_ the panel
+(`z-1000` beats the curtain's `z-940`), landing the visitor in About having
+never seen the hero. The freeze still applies throughout; only stepping waits.
+
+`releaseIntroSoon()` in `lib/intro.ts` defers the loader's teardown release by a
+frame so a StrictMode remount can reclaim the gate. A synchronous release there
+opens it ~3s early in dev and the whole hero entrance plays unseen.
 
 ## Design constraints
 
