@@ -4,6 +4,7 @@ import { useRef } from "react";
 import { gsap, useGSAP } from "@/lib/gsap";
 import { createMagnetic, MAGNETIC_MEDIA } from "@/hooks/useMagnetic";
 import { NAV_LINKS } from "@/lib/data";
+import BrandMark from "@/components/BrandMark";
 
 export default function Nav() {
   const root = useRef<HTMLElement>(null);
@@ -60,15 +61,17 @@ export default function Nav() {
           "linear-gradient(180deg, rgb(10 10 12 / 0.92), rgb(10 10 12 / 0))",
       }}
     >
-      <a
-        href="#top"
-        className="text-body flex items-center gap-3 font-mono text-xs tracking-[0.16em]"
-      >
-        <span
-          aria-hidden
-          className="bg-accent block h-2 w-2 rounded-full shadow-[0_0_12px_var(--color-accent)]"
+      {/* The mark carries the brand alone here, so it needs an accessible
+          name of its own — <BrandMark /> is aria-hidden decoration. */}
+      <a href="#top" aria-label="Lenny Dany Derek D. — back to top">
+        {/* 28px on phones, not 32: the header is only py-4 there, and every
+            extra pixel of tile is a pixel of header. Both sizes are well under
+            the 64px floor in monogramFit(), so the mark comes back thickened
+            and without its tail or DD stamp — neither survives at this size. */}
+        <BrandMark
+          px={32}
+          className="block h-[28px] w-[28px] shrink-0 md:h-[32px] md:w-[32px]"
         />
-        LDD
       </a>
 
       <nav
