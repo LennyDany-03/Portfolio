@@ -40,6 +40,24 @@ export type Stop = {
 
 type StopProvider = () => Stop[];
 
+/**
+ * The furthest the page can actually be scrolled.
+ *
+ * Every stop has to be clamped to this. A section SHORTER than the viewport
+ * that sits last in the document has a top BEYOND the maximum scroll — Contact
+ * is exactly that on most desktop heights — so its unclamped position is a
+ * place the page can never reach. Dropping such a stop (which is what used to
+ * happen) left the whole section with no stop of its own: the curtain never
+ * fired on the way in, the preview label showed the previous section, and
+ * clicking CONTACT in the nav did nothing at all.
+ */
+export function maxScrollY(): number {
+  return Math.max(
+    0,
+    document.documentElement.scrollHeight - window.innerHeight,
+  );
+}
+
 const providers = new Set<StopProvider>();
 
 export function registerStops(fn: StopProvider) {
@@ -82,8 +100,12 @@ export function sectionStop(
   section: string,
   label?: { eyebrow: string; title: string },
 ): StopProvider {
+  // Clamped, so a trailing section that cannot reach the top of the viewport
+  // still resolves to a position the page can actually sit at. See maxScrollY.
   const topOf = () =>
-    el ? el.getBoundingClientRect().top + window.scrollY : 0;
+    el
+      ? Math.min(el.getBoundingClientRect().top + window.scrollY, maxScrollY())
+      : 0;
 
   return () => {
     if (!el) return [];
@@ -105,11 +127,18 @@ export function sectionStop(
     if (overflow > vh * 0.25) {
       const steps = Math.ceil(overflow / vh);
       for (let i = 1; i <= steps; i++) {
-        // Clamp to the section bottom so the last interior stop shows the end
-        // of the section rather than overshooting into the next one.
+        // Clamped twice: to the section bottom, so the last interior stop shows
+        // the end of the section rather than overshooting into the next one,
+        // and to the document bottom, so it stays reachable.
+        const interior = () =>
+          Math.min(
+            topOf() + Math.min(i * vh, el.offsetHeight - vh),
+            maxScrollY(),
+          );
+
         stops.push({
-          y: top + Math.min(i * vh, overflow),
-          measure: () => topOf() + Math.min(i * vh, el.offsetHeight - vh),
+          y: Math.min(top + Math.min(i * vh, overflow), maxScrollY()),
+          measure: interior,
           ...base,
         });
       }

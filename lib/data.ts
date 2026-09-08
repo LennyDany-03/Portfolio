@@ -1,7 +1,24 @@
+/**
+ * Real deployment state, not decoration.
+ *
+ * The deck renders a pulsing dot for `live` only — something a visitor can
+ * open right now and find running. Everything else gets a static label, so the
+ * dot keeps meaning one thing.
+ */
+export type ProjectStatus = "live" | "shipped" | "internal" | "build";
+
+export const STATUS_LABEL: Record<ProjectStatus, string> = {
+  live: "Live",
+  shipped: "Shipped",
+  internal: "Internal",
+  build: "In build",
+};
+
 export type Project = {
   index: string;
   title: string;
   meta: string;
+  status: ProjectStatus;
   summary: string;
   detail: string;
   stack: string[];
@@ -13,9 +30,10 @@ export const PROJECTS: Project[] = [
   {
     index: "01",
     title: "Crest",
-    meta: "v0.6.x · WINDOWS",
+    meta: "v0.6.x · Windows",
+    status: "live",
     summary:
-      "The dynamic notch, built for Windows. A Mica-glass panel pinned to the top of any screen — media, files, notes, system load.",
+      "The dynamic notch, built for Windows. A Mica-glass panel pinned to the top of any screen: media, files, notes, system load.",
     detail:
       "50+ installer downloads, organic. Tag-triggered NSIS releases via GitHub Actions. Microsoft Store submission next.",
     stack: ["Tauri 2", "Rust", "TypeScript", "React"],
@@ -29,31 +47,34 @@ export const PROJECTS: Project[] = [
   },
   {
     index: "02",
-    title: "Bloom",
-    meta: "SAAS · IN BUILD",
+    title: "Tide",
+    meta: "Mobile · Android / iOS",
+    status: "shipped",
     summary:
-      "A Django + Next.js SaaS — typed API, multi-tenant data model, billing wired through Razorpay.",
-    detail: "Placeholder copy — swap in the real one-liner and metrics.",
-    stack: ["Django", "DRF", "Next.js", "Postgres"],
+      "A habit tracker that keeps the streak honest. One Flutter codebase on both stores, offline first, with local reminders and a nightly review that closes the day.",
+    detail:
+      "Selling on Gumroad. No backend to keep alive: the whole record lives on the device, so it works on a plane and costs nothing to run.",
+    stack: ["Flutter", "Dart", "SQLite"],
     links: [],
-    note: "In build",
+    note: "On Gumroad",
   },
   {
     index: "03",
     title: "NukePC HRMS",
-    meta: "MOBILE · DESKTOP · WEB",
+    meta: "Mobile · Desktop · Web",
+    status: "internal",
     summary:
       "A 3-in-1 HR platform built solo: recruitment ATS, GPS-geofenced attendance, leave management.",
     detail:
       "ZKTeco F22 biometrics over TCP/pyzk. API-level RBAC, 5 roles × 8 resources. S3 storage, Brevo SMTP.",
     stack: ["Flutter", "FastAPI", "AWS S3", "pyzk"],
     links: [],
-    note: "Internal build",
   },
   {
     index: "04",
     title: "SIMS SmartAssist",
-    meta: "KIOSK · HOSPITAL",
+    meta: "Kiosk · Hospital",
+    status: "shipped",
     summary:
       "A walk-in kiosk that lets patients register, book appointments and look up records without staff.",
     detail:
@@ -66,7 +87,8 @@ export const PROJECTS: Project[] = [
   {
     index: "05",
     title: "NIC Platform",
-    meta: "13 EVENTS · LIVE",
+    meta: "13 events · 1,800+ signups",
+    status: "live",
     summary:
       "Registration platform for every event of SRM IST's Nextgen Intelligence Club fest. 1,800+ live registrations.",
     detail:
@@ -80,17 +102,24 @@ export const PROJECTS: Project[] = [
 ];
 
 export type Stat = {
+  /** Stable key, so About can swap a hardcoded value for a live one. */
+  id: "products" | "registrations" | "commits" | "cgpa";
   value: number;
   suffix: string;
   label: string;
   decimals: number;
 };
 
+/**
+ * `commits` carries the last hand-counted figure as its value. About replaces
+ * it at render time with whatever lib/github.ts returned, so this number is
+ * only ever seen if GitHub was unreachable.
+ */
 export const STAT_BLOCKS: Stat[] = [
-  { value: 8, suffix: "+", label: "PRODUCTS SHIPPED", decimals: 0 },
-  { value: 1800, suffix: "+", label: "LIVE REGISTRATIONS", decimals: 0 },
-  { value: 1331, suffix: "", label: "GITHUB COMMITS", decimals: 0 },
-  { value: 8.49, suffix: "", label: "CGPA / 10", decimals: 2 },
+  { id: "products", value: 8, suffix: "+", label: "PRODUCTS SHIPPED", decimals: 0 },
+  { id: "registrations", value: 1800, suffix: "+", label: "LIVE REGISTRATIONS", decimals: 0 },
+  { id: "commits", value: 1331, suffix: "", label: "GITHUB COMMITS", decimals: 0 },
+  { id: "cgpa", value: 8.49, suffix: "", label: "CGPA / 10", decimals: 2 },
 ];
 
 export const MARQUEE_ROW_A = [
@@ -232,7 +261,7 @@ export const PROCESS_STEPS: ProcessStep[] = [
   {
     index: "01",
     title: "Pick the hard part",
-    body: "The interesting problem is usually the one nobody wants to own — biometrics over TCP, a native Windows overlay, rate limiting under real load. Start there, not at the scaffolding.",
+    body: "The interesting problem is usually the one nobody wants to own: biometrics over TCP, a native Windows overlay, rate limiting under real load. Start there, not at the scaffolding.",
   },
   {
     index: "02",
@@ -242,7 +271,7 @@ export const PROCESS_STEPS: ProcessStep[] = [
   {
     index: "03",
     title: "Ship it",
-    body: "Tagged releases, real installers, real users. A branch that never merges is not work — it is a hobby with extra steps.",
+    body: "Tagged releases, real installers, real users. A branch that never merges is not work. It is a hobby with extra steps.",
   },
   {
     index: "04",
@@ -292,7 +321,7 @@ export const REACH_CHANNELS: Channel[] = [
     label: "Ascendry",
     href: "https://lenny3.vercel.app",
     handle: "Udyam-registered",
-    best: "Freelance builds — web, mobile and desktop, scoped and shipped.",
+    best: "Freelance builds. Web, mobile and desktop, scoped and shipped.",
   },
   {
     label: "Instagram",

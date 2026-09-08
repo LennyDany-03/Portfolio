@@ -2,10 +2,11 @@
 
 import { useRef } from "react";
 import { gsap, useGSAP, Observer, ScrollTrigger, MEDIA } from "@/lib/gsap";
-import { collectStops, type Stop } from "@/lib/snap";
+import { collectStops, maxScrollY, type Stop } from "@/lib/snap";
 import { scrollToY, freezeScroll, thawScroll } from "@/lib/lenis";
 import { runCurtain, CURTAIN_TOTAL } from "@/lib/curtain";
 import { isIntroReleased, onIntroRelease } from "@/lib/intro";
+import { setActiveSection } from "@/lib/section";
 
 /**
  * Step duration for stops that do NOT play the curtain — Work card changes and
@@ -55,27 +56,44 @@ export default function ScrollSnap() {
         let stops: Stop[] = [];
 
         const refresh = () => {
-          const maxY = Math.max(
-            0,
-            document.documentElement.scrollHeight - window.innerHeight,
-          );
-          stops = collectStops().filter((s) => s.y <= maxY);
+          const maxY = maxScrollY();
+
+          // Clamp, never DROP. The old code filtered out every stop past the
+          // maximum scroll, which silently deleted Contact's stop on any
+          // viewport taller than the footer: the section then had no stop, no
+          // section id and no curtain label of its own, so entering it played
+          // no transition and clicking CONTACT in the nav did nothing.
+          stops = [];
+          for (const stop of collectStops()) {
+            const y = Math.min(stop.y, maxY);
+            const previous = stops[stops.length - 1];
+
+            if (previous && y - previous.y <= 8) {
+              // Two stops resolving to the same pixel. Anywhere in the middle
+              // of the page the earlier one wins, as before. At the document
+              // bottom the LATER one wins instead: several trailing sections
+              // can clamp onto the same final pixel, and the deepest is the
+              // one the visitor is trying to reach.
+              if (y >= maxY - 1) stops[stops.length - 1] = { ...stop, y };
+              continue;
+            }
+
+            stops.push({ ...stop, y });
+          }
+
           // The document bottom is ALWAYS a stop. Without it the last section
-          // snaps to its own top and everything below the fold there — the
-          // whole footer — becomes unreachable, because preventDefault has
-          // already eaten the gesture by the time we decide not to move.
+          // snaps to its own top and everything below the fold there becomes
+          // unreachable, because preventDefault has already eaten the gesture
+          // by the time we decide not to move.
           if (!stops.length || maxY - stops[stops.length - 1].y > 8) {
-            const bottom = () =>
-              Math.max(
-                0,
-                document.documentElement.scrollHeight - window.innerHeight,
-              );
-            // Shares the last real stop section so reaching the footer is not
-            // treated as arriving somewhere new.
             stops.push({
               y: maxY,
-              measure: bottom,
+              measure: maxScrollY,
+              // Shares the last real stop's section so reaching the footer is
+              // not treated as arriving somewhere new.
               section: stops[stops.length - 1]?.section ?? "end",
+              eyebrow: stops[stops.length - 1]?.eyebrow,
+              title: stops[stops.length - 1]?.title,
             });
           }
         };
@@ -153,6 +171,10 @@ export default function ScrollSnap() {
           const delta = next > from ? 1 : -1;
 
           const target = stops[next];
+          // Publish before the move, not after: the nav marker should already
+          // be on the incoming section while the curtain is covering, so it is
+          // correct the instant the screen is uncovered.
+          setActiveSection(target.section);
           // The curtain marks crossing SECTIONS, not reaching a given stop.
           // Within Work that means card-to-card stays uncovered in both
           // directions — including scrolling back up to card 01, which used to
@@ -227,18 +249,36 @@ export default function ScrollSnap() {
           refresh();
           if (!stops.length) return;
 
-          // Land on the registered stop nearest the target, so anchors can
-          // never drop the page somewhere the gesture system cannot resume from.
-          const y = el.getBoundingClientRect().top + window.scrollY;
-          let best = 0;
-          let bestDist = Infinity;
-          stops.forEach((stop, i) => {
-            const d = Math.abs(stop.y - y);
-            if (d < bestDist) {
-              bestDist = d;
-              best = i;
-            }
-          });
+          /* Resolve by SECTION ID first, and only measure geometry if that
+             fails. Every nav target registers stops under a section id equal
+             to its own element id, so this is exact — and measuring is not:
+
+               - A pinned section reports a bounding rect that depends on
+                 whether its pin is currently engaged. Clicking WORK from
+                 anywhere below it measured the pin's END, so the nearest stop
+                 was the LAST card of the deck and the visitor landed on
+                 project 05 having never seen 01.
+               - A trailing section shorter than the viewport has a top past
+                 the maximum scroll, so the nearest stop by distance is
+                 whatever the clamp produced rather than the section itself.
+
+             Falling back to distance keeps anchors working for any target that
+             is not a registered section, such as the hero's #top. */
+          let best = stops.findIndex((stop) => stop.section === id);
+
+          if (best < 0) {
+            const y = el.getBoundingClientRect().top + window.scrollY;
+            let bestDist = Infinity;
+            best = 0;
+            stops.forEach((stop, i) => {
+              const d = Math.abs(stop.y - y);
+              if (d < bestDist) {
+                bestDist = d;
+                best = i;
+              }
+            });
+          }
+
           stepTo(best);
         };
 
@@ -262,6 +302,7 @@ export default function ScrollSnap() {
         });
 
         refresh();
+        setActiveSection(stops[nearest()]?.section ?? null);
         freezeScroll();
         // Stops depend on pin lengths, which are only final after a refresh.
         ScrollTrigger.addEventListener("refresh", refresh);
@@ -271,6 +312,7 @@ export default function ScrollSnap() {
         const offIntro = onIntroRelease(refresh);
 
         return () => {
+          setActiveSection(null);
           offIntro();
           document.removeEventListener("click", onAnchorClick);
           ScrollTrigger.removeEventListener("refresh", refresh);

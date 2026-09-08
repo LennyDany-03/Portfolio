@@ -6,8 +6,37 @@ import { registerStops, sectionStop } from "@/lib/snap";
 import { directionalReveal, retainDirectionObserver } from "@/lib/direction";
 import { STAT_BLOCKS } from "@/lib/data";
 import { NEXT_LABELS } from "@/lib/data";
+import type { GithubStats } from "@/lib/github";
 
-export default function About() {
+/**
+ * Weekday index of an ISO date, Sunday first, matching GitHub's own calendar.
+ * Read in UTC so the strip cannot shift a row depending on who is looking, and
+ * so the server and the client agree on it.
+ */
+const weekday = (iso: string) => new Date(iso + "T00:00:00Z").getUTCDay();
+
+/**
+ * Contribution ramp, indexed by GitHub's own 0-4 level.
+ *
+ * Deliberately the page accent (#ff4655) rather than GitHub's green: this is
+ * the one place a second brand colour could get in, and one accent per page is
+ * the rule the rest of the site already follows.
+ */
+const HEAT = [
+  "rgb(255 255 255 / 0.06)",
+  "rgb(255 70 85 / 0.3)",
+  "rgb(255 70 85 / 0.55)",
+  "rgb(255 70 85 / 0.8)",
+  "rgb(255 70 85 / 1)",
+];
+
+export default function About({ github }: { github: GithubStats }) {
+  // The commits figure is the ONE number here that is not a claim about the
+  // past: it is whatever GitHub reported when this page was last revalidated.
+  const statBlocks = STAT_BLOCKS.map((stat) =>
+    stat.id === "commits" ? { ...stat, value: github.commits } : stat,
+  );
+
   const root = useRef<HTMLElement>(null);
   const lead = useRef<HTMLParagraphElement>(null);
   const body = useRef<HTMLParagraphElement>(null);
@@ -72,6 +101,22 @@ export default function About() {
                 once: true,
               },
             }),
+        });
+
+        // The contribution strip fills in left to right behind the counter, so
+        // the number and the history it came from arrive together. One tween
+        // with a stagger, not 126 tweens.
+        gsap.from("[data-heat-cell]", {
+          opacity: 0,
+          scale: 0.4,
+          duration: 0.5,
+          stagger: 0.006,
+          ease: "power2.out",
+          scrollTrigger: {
+            trigger: stats.current,
+            start: "top 88%",
+            once: true,
+          },
         });
 
         // Stat row moves as one unit, direction-aware.
@@ -159,7 +204,7 @@ export default function About() {
             className="text-hi font-display m-0 text-[clamp(24px,3vw,44px)] leading-[1.22] tracking-[-0.025em] text-pretty"
           >
             Second-year CSE (AI &amp; ML) at SRM IST. I build production systems
-            end-to-end — backend, frontend, infra, release pipeline — alone.
+            end-to-end: backend, frontend, infra, release pipeline, alone.
           </p>
 
           <p
@@ -169,7 +214,7 @@ export default function About() {
             Native Windows overlays in Rust/Tauri. HRMS platforms on Flutter
             with biometric attendance. Registration systems holding 1,800+ live
             users. Three internships, one freelance venture (Ascendry,
-            Udyam-registered), and a habit tracker selling on Gumroad. The
+            Udyam-registered), and Tide, a habit tracker selling on Gumroad. The
             pattern is the same every time: pick the hard part, ship it, keep it
             running.
           </p>
@@ -179,9 +224,11 @@ export default function About() {
             data-reveal-clip
             className="bg-hair-2 mt-5 grid grid-cols-2 gap-px lg:grid-cols-4"
           >
-            {STAT_BLOCKS.map((stat) => (
+            {statBlocks.map((stat) => (
               <div key={stat.label} className="bg-ink px-5 py-6 md:px-[22px]">
-                <dd className="text-hi font-display text-[32px] tracking-[-0.03em] md:text-[40px]">
+                {/* tabular-nums so the counter does not reflow its own row on
+                    every frame while it counts up. */}
+                <dd className="text-hi font-display text-[32px] tracking-[-0.03em] tabular-nums md:text-[40px]">
                   <span data-count={stat.value} data-decimals={stat.decimals}>
                     0
                   </span>
@@ -192,6 +239,35 @@ export default function About() {
                 <dt className="text-dim mt-2 font-mono text-[10px] tracking-[0.16em]">
                   {stat.label}
                 </dt>
+
+                {/* The commits figure is live, so it gets to show its working:
+                    the trailing 18 weeks of the contribution calendar the
+                    number was summed from. Decorative and aria-hidden, because
+                    the number above already carries the information. */}
+                {stat.id === "commits" && github.recent.length > 0 && (
+                  <div
+                    aria-hidden
+                    className="mt-3 grid w-max grid-flow-col grid-rows-[repeat(7,3px)] gap-[2px]"
+                  >
+                    {/* Pad to the first day's real weekday, so the rows line up
+                        with GitHub's own Sunday-first calendar instead of
+                        wherever the 126-day slice happened to begin. */}
+                    {Array.from(
+                      { length: weekday(github.recent[0].date) },
+                      (_, i) => (
+                        <span key={"pad" + i} className="h-[3px] w-[3px]" />
+                      ),
+                    )}
+                    {github.recent.map((day) => (
+                      <span
+                        key={day.date}
+                        data-heat-cell
+                        className="h-[3px] w-[3px] rounded-[1px]"
+                        style={{ backgroundColor: HEAT[day.level] ?? HEAT[0] }}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </dl>

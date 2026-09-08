@@ -7,6 +7,7 @@ import {
   CURTAIN,
   CURTAIN_COVER,
   CURTAIN_OUT_AT,
+  CURTAIN_TOTAL,
   LABEL,
   LABEL_OUT_AT,
 } from "@/lib/curtain";
@@ -63,8 +64,40 @@ export default function SectionCurtain() {
 
           let active: gsap.core.Timeline | null = null;
 
+          /**
+           * Put the curtain away, whatever state it is in.
+           *
+           * Extracted because `onComplete` used to be the ONLY path back to
+           * hidden, which made an un-run onComplete indistinguishable from a
+           * dead site: three opaque full-viewport panels parked at z-940, over
+           * a nav at z-800, is a black screen with a cursor on it.
+           */
+          const hide = () => {
+            gsap.set(root.current, { visibility: "hidden" });
+            gsap.set(label.current, { opacity: 0 });
+          };
+
+          /**
+           * Deadline for the run in flight.
+           *
+           * A timeline killed part-way through never reaches onComplete, and a
+           * kill can come from outside this module: a hot reload, a second
+           * transition starting on the same frame the first one lands, a
+           * StrictMode remount. Rather than enumerate those, every run arms a
+           * timer for comfortably longer than the transition and disarms it on
+           * completion. If the timer ever fires, something went wrong and the
+           * page gets its pixels back instead of staying black.
+           */
+          let deadline: gsap.core.Tween | null = null;
+
+          const disarm = () => {
+            deadline?.kill();
+            deadline = null;
+          };
+
           setCurtainRunner((dir, onCovered, text) => {
             active?.kill();
+            disarm();
 
             // Fill the preview BEFORE the sweep starts, so the words are
             // already in place the instant the bands finish covering.
@@ -88,11 +121,11 @@ export default function SectionCurtain() {
                 onStart: () =>
                   gsap.set(root.current, { visibility: "visible" }),
                 onComplete: () => {
-                  gsap.set(root.current, { visibility: "hidden" });
                   // Belt and braces: whatever the tweens did, the label is
                   // gone once the bands are. This is the state that leaked and
                   // left the title sitting over the live page.
-                  gsap.set(label.current, { opacity: 0 });
+                  hide();
+                  disarm();
                   active = null;
                 },
               })
@@ -152,19 +185,30 @@ export default function SectionCurtain() {
                 CURTAIN_OUT_AT,
               );
 
+            // Armed AFTER the timeline is built, so a throw while building
+            // cannot leave a covered screen with nothing scheduled to clear
+            // it. Uses the GSAP ticker rather than setTimeout so it pauses and
+            // resumes with the animation when the tab is backgrounded.
+            deadline = gsap.delayedCall(CURTAIN_TOTAL * 2, () => {
+              active?.kill();
+              active = null;
+              hide();
+              deadline = null;
+            });
+
             return active;
           });
 
           return () => {
+            disarm();
             // Killing a running timeline skips its onComplete, which is what
             // resets visibility — so without this the panels stay parked over
             // the whole page and the site is a black screen. Bites on every
             // hot reload that lands mid-transition.
             active?.kill();
             active = null;
-            gsap.set(root.current, { visibility: "hidden" });
+            hide();
             gsap.set(layers, { yPercent: 115 });
-            gsap.set(label.current, { opacity: 0 });
             setCurtainRunner(null);
           };
         },
