@@ -5,6 +5,7 @@ import Stack from "@/components/sections/Stack";
 import Process from "@/components/sections/Process";
 import Reach from "@/components/sections/Reach";
 import Contact from "@/components/sections/Contact";
+import { getGithubStats } from "@/lib/github";
 
 /*
  * FRAMES (components/sections/Frames.tsx) is intentionally not rendered.
@@ -15,11 +16,24 @@ import Contact from "@/components/sections/Contact";
  * everything from there down.
  */
 
-export default function Home() {
+/**
+ * Re-fetch the GitHub numbers hourly.
+ *
+ * The page is otherwise fully static, and this keeps it that way: visitors are
+ * served prerendered HTML with the commit count already in it, and Next
+ * refreshes that HTML in the background once an hour. Fetching client-side
+ * instead would mean every visitor spending GitHub's per-IP rate limit, a
+ * number that pops in after paint, and a layout shift under it.
+ */
+export const revalidate = 3600;
+
+export default async function Home() {
+  const github = await getGithubStats();
+
   return (
     <>
       <Hero />
-      <About />
+      <About github={github} />
       <Work />
       <Stack />
       <Process />

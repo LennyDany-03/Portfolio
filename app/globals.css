@@ -150,6 +150,42 @@ body {
   animation: frame-in 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
+/* ---------------------------------------------------------------------------
+   WORK CALLSIGN
+   The active project's name, outlined and oversized, sitting behind the deck.
+   Outline rather than a low-opacity fill: a filled ghost at this size reads as
+   a smudge, an outline reads as structure. Falls back to a faint fill where
+   text-stroke is unsupported, since the element is decorative and aria-hidden.
+--------------------------------------------------------------------------- */
+[data-work-callsign] {
+  color: rgb(255 255 255 / 0.035);
+}
+
+@supports (-webkit-text-stroke: 1px #000) {
+  [data-work-callsign] {
+    color: transparent;
+    -webkit-text-stroke: 1px rgb(255 255 255 / 0.13);
+  }
+}
+
+/* The only looping dot on the page, and it carries real state: this project is
+   running right now and the Live link opens it. */
+@keyframes live-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.3;
+    transform: scale(0.75);
+  }
+}
+
+.animate-live {
+  animation: live-pulse 2s ease-in-out infinite;
+}
+
 .grain {
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4'/></filter><rect width='160' height='160' filter='url(%23n)'/></svg>");
   mix-blend-mode: overlay;
@@ -277,8 +313,14 @@ html[data-scroll-locked] body {
 @media (prefers-reduced-motion: reduce) {
   .animate-blink,
   .animate-drift,
-  .animate-frame-in {
+  .animate-frame-in,
+  .animate-live {
     animation: none !important;
+  }
+  /* The deck does not run under reduced motion, so nothing ever writes the
+     callsign's text. Hide the empty box rather than leave it in the flow. */
+  [data-work-callsign] {
+    display: none;
   }
   html {
     scroll-behavior: auto !important;
@@ -315,11 +357,35 @@ html[data-scroll-locked] body {
     overflow: hidden;
     display: grid;
     grid-template-rows: auto minmax(0, 1fr) auto;
+    /* Explicit, because the element also carries `justify-center` for the
+       reduced-motion flex fallback. In grid, a non-stretch justify-content
+       stops an implicit `auto` column filling its container and sizes it to
+       max-content instead — which collapsed this whole stage to about 760px,
+       pulled the Work header ~240px right of every other section's header,
+       and left no room either side of the deck for anything to bleed into. */
+    grid-template-columns: minmax(0, 1fr);
     /* The rail layout carries py-24 for its own spacing. Inside a fixed-height
        stage that padding comes straight out of the deck, which on a phone is
        most of the room the card had. */
     padding-block: 0;
     gap: 0;
+  }
+
+  /* The 1fr row. Holds the ghost callsign (absolute, behind) and the tilt
+     wrapper, and owns the perspective the tilt is read through. */
+  [data-work-body] {
+    position: relative;
+    min-height: 0;
+    perspective: 1800px;
+  }
+
+  /* Pointer parallax lives HERE, not on the cards: deckState() in Work.tsx
+     already owns every card's rotateX, and two authorities writing one
+     transform is a fight nobody wins. */
+  [data-work-tilt] {
+    height: 100%;
+    transform-style: preserve-3d;
+    will-change: transform;
   }
 
   /* Every card is placed in the SAME grid cell, so they stack. Grid rather
@@ -331,7 +397,14 @@ html[data-scroll-locked] body {
   [data-work-track] {
     position: relative;
     display: grid;
-    place-items: center;
+    /* END, not centre. The card is anchored to the same 1240px measure as
+       every other section's content, so its right edge lines up with the
+       headline above it instead of floating at the middle of the viewport,
+       and the ghost callsign gets the whole left side to itself. */
+    place-items: center end;
+    max-width: 1240px;
+    margin-inline: auto;
+    height: 100%;
     overflow: visible;
     scroll-snap-type: none;
     perspective: 1400px;
@@ -349,28 +422,5 @@ html[data-scroll-locked] body {
     max-height: 100%;
     will-change: transform, opacity;
     transform-style: preserve-3d;
-  }
-}
-
-html[data-scroll-locked] body {
-  touch-action: pinch-zoom;
-}
-
-/* Hide the horizontal scrollbar on the mobile card rail. */
-.no-scrollbar {
-  scrollbar-width: none;
-}
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .animate-blink,
-  .animate-drift,
-  .animate-frame-in {
-    animation: none !important;
-  }
-  html {
-    scroll-behavior: auto !important;
   }
 }

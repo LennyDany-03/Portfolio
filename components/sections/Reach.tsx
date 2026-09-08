@@ -108,7 +108,7 @@ export default function Reach() {
           >
             Internships, freelance builds, or anything that needs one person to
             own it end to end. Chennai-based, remote-friendly. Pick whichever
-            channel fits — they all reach me.
+            channel fits. They all reach me.
           </p>
 
           {/* Hairline-separated rows rather than cards: this section sits
