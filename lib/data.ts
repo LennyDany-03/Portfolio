@@ -41,7 +41,7 @@ export const PROJECTS: Project[] = [
       { label: "Live", href: "https://crest-beta.vercel.app", primary: true },
       {
         label: "GitHub",
-        href: "https://github.com/LennyDany-03/Dynamic-Notch",
+        href: "https://github.com/lennydany3/Dynamic-Notch",
       },
     ],
   },
@@ -81,7 +81,7 @@ export const PROJECTS: Project[] = [
       "Wired into a hospital SOAP API. Designed for non-technical users: error-tolerant flows over feature density.",
     stack: ["React", "Django", "SOAP API"],
     links: [
-      { label: "GitHub", href: "https://github.com/LennyDany-03/SIMS-Kiosk" },
+      { label: "GitHub", href: "https://github.com/lennydany3/SIMS-Kiosk" },
     ],
   },
   {
@@ -96,7 +96,7 @@ export const PROJECTS: Project[] = [
     stack: ["Next.js", "Supabase", "Upstash Redis", "AWS S3"],
     links: [
       { label: "Live", href: "https://nic-srm.vercel.app", primary: true },
-      { label: "GitHub", href: "https://github.com/LennyDany-03/NIC-Website" },
+      { label: "GitHub", href: "https://github.com/lennydany3/NIC-Website" },
     ],
   },
 ];
@@ -307,8 +307,8 @@ export type Channel = {
 export const REACH_CHANNELS: Channel[] = [
   {
     label: "GitHub",
-    href: "https://github.com/LennyDany-03",
-    handle: "@LennyDany-03",
+    href: "https://github.com/lennydany3",
+    handle: "@lennydany3",
     best: "Source, tagged releases, commit history. The work itself.",
   },
   {
@@ -359,10 +359,10 @@ export const NAV_LINKS = [
 ];
 
 export const SOCIAL_LINKS = [
-  { label: "GitHub", href: "https://github.com/LennyDany-03" },
+  { label: "GitHub", href: "https://github.com/lennydany3" },
   { label: "Instagram", href: "https://instagram.com/lennydany3" },
   { label: "LinkedIn", href: "https://linkedin.com/in/lenny-dany-derek-d" },
-  { label: "Ascendry", href: "https://lenny3.vercel.app" },
+  { label: "Ascendry", href: "https://ascendry.vercel.app" },
 ];
 
 export const EMAIL = "lennydany3@gmail.com";
